@@ -2,30 +2,34 @@ import { useEffect, useState } from "react";
 import { S, C } from "../theme.js";
 import { setLabels, setTeamCap, setMaxTeams, resetBoard, closeRoom, MAX_TEAMS_MIN, MAX_TEAMS_MAX } from "../rooms/api.js";
 
-const RUN_SHEET = [
-  ["0:00", "Teams of four. Team name in. No explaining."],
-  ["0:03", "Draw 5 of each and add them."],
-  ["0:13", "Train. Everyone hits about 100%."],
-  ["0:16", "Draw fresh ones, press What is it?"],
-  ["0:20", "Send to the class. Press Reveal tournament. Projector on."],
-  ["0:24", "Watch the scores collapse. Let them talk."],
-  ["0:32", "The mango question. Do not answer it."],
-  ["0:38", "Out."],
-];
+const OUT = "Out. Settings → Close room, so nobody rejoins it next lesson.";
 
-const RUN_SHEET_2 = [
-  ["0:00", "Teams of four. Room code in. Projector: Lobby."],
-  ["0:03", "Start chatting. Projector: Scoreboard (only the feed shows). Say nothing about how it works."],
-  ["0:11", "Reveal scoreboard. Let them read the bars. Ask the question on screen."],
-  ["0:14", "Show me everything it has ever read. Tap a question to highlight its words."],
-  ["0:18", "Start training. One phone per team sends. Agree first."],
-  ["0:26", "Open cross-examination. Ask strangers' bots. Be a fair examiner."],
-  ["0:34", "Leaderboard. Look at the strips: every bot has one bump. Where is it?"],
-  ["0:40", "Out."],
-];
+// One period, minute by minute. Team size comes from the room so the sheet matches what the teacher set.
+export const runSheet = (activity, teamCap) => (activity === 2
+  ? [
+    ["0:00", `Teams of ${teamCap}. Room code in. Projector: Lobby.`],
+    ["0:03", "Start chatting. Projector: Scoreboard (only the feed shows). Say nothing about how it works."],
+    ["0:11", "Reveal scoreboard. Let them read the bars. Ask the question on screen."],
+    ["0:14", "Show me everything it has ever read. Tap a question to highlight its words."],
+    ["0:18", "Start training. One phone per team sends. Agree first."],
+    ["0:26", "Open cross-examination. Ask strangers' bots. Be a fair examiner."],
+    ["0:34", "Projector: Scoreboard. Look at the strips: every bot has one bump. Where is it?"],
+    ["0:40", OUT],
+  ]
+  : [
+    ["0:00", `Teams of ${teamCap}. Team name in. Projector: Lobby. No explaining.`],
+    ["0:03", "Draw 5 of each and add them."],
+    ["0:13", "Train. Everyone hits about 100%."],
+    ["0:16", "Draw fresh ones, press What is it?"],
+    ["0:20", "Send to the class. Press Reveal tournament. Projector: Tournament."],
+    ["0:24", "Watch the scores collapse. Let them talk."],
+    ["0:32", "The mango question. Do not answer it."],
+    ["0:38", OUT],
+  ]);
 
 export function Settings({ code, meta, flash, activity = 1 }) {
   const isTalk = activity === 2;
+  const teamCap = meta?.teamCap ?? 4;
   const [a, setA] = useState(meta.labels?.[0] || "");
   const [b, setB] = useState(meta.labels?.[1] || "");
   const [cap, setCap] = useState(meta.teamCap || 4);
@@ -90,7 +94,7 @@ export function Settings({ code, meta, flash, activity = 1 }) {
 
         <section style={S.card}>
           <h2 style={S.h2}>Run sheet, one period</h2>
-          {(isTalk ? RUN_SHEET_2 : RUN_SHEET).map(([t, w]) => (
+          {runSheet(activity, teamCap).map(([t, w]) => (
             <div key={t} style={S.sheetRow}>
               <span style={{ color: C.mangoDeep, minWidth: 42, fontWeight: 800 }}>{t}</span>
               <span style={{ color: C.muted }}>{w}</span>
@@ -113,16 +117,11 @@ export function Settings({ code, meta, flash, activity = 1 }) {
                 Don't say "it doesn't know" or "it's only trained on history" until the scoreboard is up.
                 Let the students find it. Say: "Ask it something. Was it right? Vote."
               </p>
-              <h2 style={{ ...S.h2, marginTop: 18 }}>The reveal</h2>
-              <p style={S.notesP}>
-                Tap "Show me everything it has ever read" on the projector. Then ask the class: it never
-                once said "I don't know". Why not?
-              </p>
               <h2 style={{ ...S.h2, marginTop: 18 }}>Say this</h2>
               <p style={S.notesP}><b>Chat:</b> "There is a bot on your phone. It has read exactly one thing in its life. Ask it anything. Tag the topic, read the answer, then tell me: right, wrong, or nonsense. Be honest — this is a report on it, not a vote for it."</p>
               <p style={S.notesP}><b>Reveal:</b> "Read the headline to me. It answered every single question in full sentences and never once said 'I don't know'. Why not?" Take three answers, agree with none. Then press Show me everything it has ever read: "This is its whole mind. Find the sentence yours came from."</p>
               <p style={S.notesP}><b>Train:</b> "Now build your own. Tick what it reads — that is everything it will ever know. Train it, ask it about its topic, then about something else. Watch the coverage line."</p>
-              <p style={S.notesP}><b>Exam:</b> "Every bot is now questioned by strangers. Ask other teams' bots. Be a fair examiner." Then: "Look at the strips. Every bot has one bump. Where is the bump? That is what it read."</p>
+              <p style={S.notesP}><b>Exam:</b> "Every bot is now questioned by strangers. Ask other teams' bots. Be a fair examiner." Then, on the Scoreboard: "Look at the strips. Every bot has one bump. Where is the bump? That is what it read."</p>
               <p style={S.notesP}><b>Wrap:</b> "Last lesson: a machine only knows what it was shown. This lesson: a language model only says what it has read, one word at a time, confidently, about anything. The big ones have read millions of times more, so the mistakes are rarer and harder to spot. What did it read, and who chose that?"</p>
             </>
           ) : (
@@ -137,6 +136,8 @@ export function Settings({ code, meta, flash, activity = 1 }) {
                 in styles other teams might use, retrain and send again. The next reveal shows each team's change.
                 Ask before they draw: what would you need to show the machine so it stops caring who drew it?
               </p>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>Wrap</h2>
+              <p style={S.notesP}>Say it once, word for word: "A machine only knows what it was shown. Yours was shown ten drawings by four people."</p>
               <h2 style={{ ...S.h2, marginTop: 18 }}>Bendy fence, if you get a second period</h2>
               <p style={S.notesP}>
                 One neuron draws a straight fence. Ask teams to make a pattern no straight fence can split,
@@ -156,7 +157,7 @@ export function Settings({ code, meta, flash, activity = 1 }) {
           </p>
           <div style={S.btnRow}>
             <button className="nl-btn" style={S.danger} disabled={busy}
-              onClick={() => window.confirm(isTalk ? "Wipe every question, vote and team bot and go back to chatting? Teams stay." : "Erase every model and challenge from the class board?") && run(() => resetBoard({ code, activity }), "Class board cleared.")}>
+              onClick={() => window.confirm(isTalk ? "Wipe every question, vote and team bot and go back to chatting? Teams stay." : "Wipe every sent machine, challenge and round score and go back to round 1 of Teach it? Teams stay.") && run(() => resetBoard({ code, activity }), "Class board cleared.")}>
               Reset board
             </button>
             <button className="nl-btn" style={S.danger} disabled={busy || meta.closed}
