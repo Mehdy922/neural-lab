@@ -19,7 +19,9 @@ describe("theme", () => {
       "chBody", "chTeam", "chBest", "chBtns", "toast", "center", "centerCard", "choiceGrid", "choiceCard",
       "choiceEmoji", "choiceTitle", "choiceSub", "field", "label", "input", "codeInput", "codeBig", "qr", "link",
       "teamGrid", "teamCard", "teamCardMine", "teamName", "teamCount", "memberList", "member", "caution", "badge",
-      "phaseBar", "phaseBtn", "phaseNow", "settingsGrid", "notesP", "sheetRow", "logo", "row"];
+      "phaseBar", "phaseBtn", "phaseNow", "settingsGrid", "notesP", "sheetRow", "logo", "row",
+      "chatWrap", "bubbleQ", "bubbleA", "bubbleWho", "topicChip", "topicChipOn", "voteRow", "voteBtn", "voteBtnOn",
+      "coverage", "hintText", "corpus", "hl", "textCard", "textCardOn", "counter", "feedItem", "botCard", "botCardOn"];
     for (const k of needed) expect(S[k], `S.${k}`).toBeDefined();
   });
 });
