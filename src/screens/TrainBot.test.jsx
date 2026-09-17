@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 vi.mock("../rooms/hooks.js", () => ({ useTeamBot: () => ({ value: null, loading: false }) }));
 const api = { sendBot: vi.fn(() => Promise.resolve()) };
-vi.mock("../rooms/api.js", () => ({ sendBot: (...a) => api.sendBot(...a), MAX_BOT_TEXT: 6000, MIN_BOT_WORDS: 150 }));
+vi.mock("../rooms/api.js", () => ({ sendBot: (...a) => api.sendBot(...a), MAX_BOT_TEXT: 50000, MAX_OWN_TEXT: 6000, MIN_BOT_WORDS: 150 }));
 
 import { TrainBot } from "./TrainBot.jsx";
 
@@ -37,5 +37,15 @@ describe("TrainBot", () => {
     const sendBtn = screen.getByRole("button", { name: /Send my bot/ });
     expect(sendBtn.disabled).toBe(true);
     expect(screen.getByText("Only a team can send a bot. You can still train and test one here.")).toBeTruthy();
+  });
+  it("History alone is long enough to train and actually send (not blocked by the stored-text cap)", async () => {
+    render(<TrainBot {...base} />);
+    fireEvent.click(screen.getByRole("button", { name: /South Asian history/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Train my bot/ }));
+    const sendBtn = screen.getByRole("button", { name: /Send my bot to the class/ });
+    expect(sendBtn.disabled).toBe(false);
+    fireEvent.click(sendBtn);
+    await Promise.resolve();
+    expect(api.sendBot).toHaveBeenCalledWith(expect.objectContaining({ code: "ABCDE", teamId: "tA", uid: "u1", sources: ["history"] }));
   });
 });

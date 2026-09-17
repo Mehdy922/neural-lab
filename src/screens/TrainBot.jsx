@@ -3,7 +3,7 @@ import { S, C } from "../theme.js";
 import { STARTER_TEXTS } from "../lm/texts/index.js";
 import { trainModel, modelStats } from "../lm/ngram.js";
 import { tokenize, isWord } from "../lm/tokenize.js";
-import { sendBot, MAX_BOT_TEXT, MIN_BOT_WORDS } from "../rooms/api.js";
+import { sendBot, MAX_BOT_TEXT, MAX_OWN_TEXT, MIN_BOT_WORDS } from "../rooms/api.js";
 import { useTeamBot } from "../rooms/hooks.js";
 import { BotChat } from "../components/BotChat.jsx";
 
@@ -19,7 +19,7 @@ export function TrainBot({ code, uid, team, isTeacher, flash }) {
   const combined = useMemo(() => [...picked.map((id) => STARTER_TEXTS.find((t) => t.id === id)?.text || ""), own.trim()].filter(Boolean).join("\n\n"), [picked, own]);
   const words = useMemo(() => countWords(combined), [combined]);
   const ownWords = useMemo(() => countWords(own), [own]);
-  const ready = words >= MIN_BOT_WORDS && combined.length <= MAX_BOT_TEXT * 2;
+  const ready = words >= MIN_BOT_WORDS && combined.length <= MAX_BOT_TEXT;
 
   const toggle = (id) => { setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id])); setModel(null); };
   const train = () => setModel(trainModel(combined));
@@ -51,9 +51,9 @@ export function TrainBot({ code, uid, team, isTeacher, flash }) {
         <div style={S.field}>
           <label style={S.label} htmlFor="own-text">Your own text (optional)</label>
           <textarea id="own-text" className="nl-in" style={{ ...S.input, minHeight: 110, resize: "vertical", fontSize: 14 }} value={own}
-            maxLength={MAX_BOT_TEXT} placeholder="Paste anything: a page of notes, a story, a match report…" onChange={(e) => { setOwn(e.target.value); setModel(null); }}
+            maxLength={MAX_OWN_TEXT} placeholder="Paste anything: a page of notes, a story, a match report…" onChange={(e) => { setOwn(e.target.value); setModel(null); }}
             aria-label="Your own text" />
-          <div style={S.counter}>{ownWords} words · {own.length.toLocaleString()} / {MAX_BOT_TEXT.toLocaleString()} characters</div>
+          <div style={S.counter}>{ownWords} words · {own.length.toLocaleString()} / {MAX_OWN_TEXT.toLocaleString()} characters</div>
         </div>
         <button className="nl-btn" style={{ ...S.train, marginTop: 12 }} disabled={!ready} onClick={train}>
           Train my bot ({words.toLocaleString()} words)

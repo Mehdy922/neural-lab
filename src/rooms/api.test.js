@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickTests, buildModelPayload, normalizeMaxTeams, summarizeRound, TEST_PER_LABEL, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX, buildVote, buildBotVote, MAX_Q, MAX_A, MAX_BOT_TEXT, MIN_BOT_WORDS } from "./api.js";
+import { pickTests, buildModelPayload, normalizeMaxTeams, summarizeRound, TEST_PER_LABEL, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX, buildVote, buildBotVote, MAX_Q, MAX_A, MAX_BOT_TEXT, MAX_OWN_TEXT, MIN_BOT_WORDS } from "./api.js";
 import { newNet } from "../ml/net.js";
 
 const mk = (label, v) => ({ label, pix: new Array(4).fill(v) });
@@ -95,7 +95,8 @@ describe("buildVote / buildBotVote", () => {
     expect(c.askerTeamId).toBe("tA");
   });
   it("limits", () => {
-    expect(MAX_BOT_TEXT).toBe(6000);
+    expect(MAX_BOT_TEXT).toBe(50000);
+    expect(MAX_OWN_TEXT).toBe(6000);
     expect(MIN_BOT_WORDS).toBe(150);
   });
 });

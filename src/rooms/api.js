@@ -13,7 +13,8 @@ export const MAX_TEAMS_MIN = 2;
 export const MAX_TEAMS_MAX = 20;
 export const MAX_Q = 120;
 export const MAX_A = 240;
-export const MAX_BOT_TEXT = 6000;
+export const MAX_OWN_TEXT = 6000;
+export const MAX_BOT_TEXT = 50000;
 export const MIN_BOT_WORDS = 150;
 
 const roomRef = (code, sub = "") => ref(getFirebase().db, `rooms/${code}${sub ? "/" + sub : ""}`);

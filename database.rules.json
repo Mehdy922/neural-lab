@@ -106,7 +106,7 @@
           "$teamId": {
             ".write": "auth != null && root.child('rooms/' + $code + '/members/' + auth.uid + '/teamId').val() === $teamId",
             ".validate": "newData.hasChildren(['text', 'sentBy'])",
-            "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 6000" },
+            "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 50000" },
             "sources": { "$i": { ".validate": "newData.isString() && newData.val().length <= 24" } },
             "sentBy": { ".validate": "newData.isString()" },
             "at": { ".validate": "newData.isNumber()" },

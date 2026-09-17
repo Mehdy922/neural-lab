@@ -17,7 +17,7 @@ import { getDatabase, connectDatabaseEmulator, ref, get, set, update, push, remo
 import { firebaseConfig } from "../src/firebaseConfig.js";
 import { newNet, trainEpochs, accuracy, fwd, HID_A, EPOCHS_A, LR_A, MIN_PER_LABEL, pct, mulberry32 } from "../src/ml/net.js";
 import { GRID, NPIX } from "../src/ml/capture.js";
-import { buildModelPayload, summarizeRound, DEFAULT_TEAM_CAP, normalizeMaxTeams, buildVote, buildBotVote, MAX_BOT_TEXT } from "../src/rooms/api.js";
+import { buildModelPayload, summarizeRound, DEFAULT_TEAM_CAP, normalizeMaxTeams, buildVote, buildBotVote } from "../src/rooms/api.js";
 import { buildTournamentTable, tableAverages, withDeltas, historyAverages, MIN_TEAMS_MEANINGFUL } from "../src/ml/scoring.js";
 import { generateRoomCode } from "../src/rooms/codes.js";
 import { visibleTabs } from "../src/rooms/phases.js";
@@ -201,7 +201,7 @@ async function runActivity2() {
     const starter = STARTER_TEXTS.find((x) => x.id === starterId);
     const sender = t.members[0];
     botText[id] = starterId;
-    await set(R(sender, code, `bots/${id}`), { text: starter.text.slice(0, MAX_BOT_TEXT), sources: [starterId], sentBy: sender.uid, at: serverTimestamp() });
+    await set(R(sender, code, `bots/${id}`), { text: starter.text, sources: [starterId], sentBy: sender.uid, at: serverTimestamp() });
     log(`   ${t.name.padEnd(14)} trained on "${starter.title}" ${starter.emoji} (${starter.words} words) → ${sender.name} pressed Send`);
   }
 

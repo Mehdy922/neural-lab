@@ -111,7 +111,7 @@ activity 2. Activity 1 phases/tabs are untouched.
 
 - Team picks any combination of starter texts (checkbox cards with title, emoji, word
   count) and/or pastes own text (textarea, ≤ 6,000 chars, live counter). Combined text
-  must be ≥ 150 words to train.
+  must be ≥ 150 words to train and ≤ 50,000 chars (all six starters plus own text) to send.
 - **Train** builds the model locally (instant) and shows: vocabulary size, word count,
   and a "try it" chat (no voting) so the team can test.
 - **Send my bot to the class** writes `bots/{teamId}: { text, sources[], sentBy, at }`.
@@ -137,7 +137,7 @@ activity 2. Activity 1 phases/tabs are untouched.
 meta.activity:   1 | 2 (absent = 1)
 meta.phase:      activity 1 set ∪ { chat, reveal, train, exam }   (lobby shared)
 votes/{id}:      { uid, topic, verdict, q (≤120), a (≤240), known, total, at }
-bots/{teamId}:   { text (≤6000), sources: [ids], sentBy, at }
+bots/{teamId}:   { text (≤50000), sources: [ids], sentBy, at }
 botVotes/{id}:   { uid, askerTeamId | null, botTeamId, topic, verdict, q (≤120), at }
 ```
 `topic` ∈ {history, science, sport, maths, everyday, other}; `verdict` ∈ {right, wrong,
@@ -150,7 +150,8 @@ nonsense}. Subscriptions: `votes` only while Chat/Scoreboard mounted; `bots` and
 - `votes/$id`, `botVotes/$id`: create-only by any authed user (`!data.exists()`),
   `uid === auth.uid`, string/enum/length validation; delete by teacher only (cascade).
 - `bots/$teamId`: write by a member whose `teamId === $teamId` or the teacher; `text`
-  string 1–6000 chars; `sources` list of known ids (validated as strings).
+  string 1–50,000 chars (the stored, combined text — own pasted text is separately capped
+  at 6,000 chars client-side); `sources` list of known ids (validated as strings).
 - Reset board (activity 2): teacher multi-path update `votes: null, bots: null,
   botVotes: null, meta/phase: "chat"`.
 - Emulator tests for each.

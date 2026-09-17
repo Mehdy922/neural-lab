@@ -15,7 +15,7 @@
 - Plain JavaScript, React function components; no new dependencies.
 - Activity 2 phases in order: `lobby → chat → reveal → train → exam`. Activity 1 phases, tabs and behaviour unchanged. `meta.activity` absent means 1.
 - Topics: `history, science, sport, maths, everyday, other`. Verdicts: `right, wrong, nonsense`. Nonsense counts as wrong in every score.
-- Limits: question ≤ 120 chars, stored answer ≤ 240 chars, bot text 1–6,000 chars, combined training text ≥ 150 words to train. Scoreboard shows bars at ≥ 10 votes; a bot's foreign % shows at ≥ 3 foreign votes.
+- Limits: question ≤ 120 chars, stored answer ≤ 240 chars, own pasted text ≤ 6,000 chars, stored combined bot text ≤ 50,000 chars, combined training text ≥ 150 words to train. Scoreboard shows bars at ≥ 10 votes; a bot's foreign % shows at ≥ 3 foreign votes.
 - Model: trigram with backoff to bigram/unigram; seeded RNG `mulberry32` from `src/ml/net.js`; `seed = hashString(question) + attempt`; answers 8–40 words, always end with a full stop, use only vocabulary words.
 - Verbatim copy: "HistoryBot has read one thing in its life: 2,000 words about South Asian history. Ask it anything." · "Recognised {known} of {total} words in your question." · "It never once said 'I don't know'. Why not?" · "Show me everything it has ever read" · "Every bot is now questioned by strangers. Which one survived?"
 - Starter texts are original prose written for this project (no quotations), simple English, complete sentences ending in `.`/`?`/`!`; history ≥ 1,800 words, others ≥ 600 words.
@@ -906,10 +906,10 @@ describe("bots", () => {
     await assertSucceeds(db("s1").ref(path("bots/tA")).set(bot));
     await assertFails(db("s1").ref(path("bots/tB")).set(bot));
   });
-  it("text is bounded 1..6000", async () => {
+  it("text is bounded 1..50000", async () => {
     await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "" }));
-    await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(6001) }));
-    await assertSucceeds(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(6000) }));
+    await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(50001) }));
+    await assertSucceeds(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(50000) }));
   });
   it("teacher can wipe bots", async () => {
     await env.withSecurityRulesDisabled((ctx) => ctx.database().ref(path("bots/tA")).set(bot));
@@ -972,7 +972,7 @@ Add these three nodes as siblings of `"challenges"` (inside `"$code"`, before th
           "$teamId": {
             ".write": "auth != null && root.child('rooms/' + $code + '/members/' + auth.uid + '/teamId').val() === $teamId",
             ".validate": "newData.hasChildren(['text', 'sentBy'])",
-            "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 6000" },
+            "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 50000" },
             "sources": { "$i": { ".validate": "newData.isString() && newData.val().length <= 24" } },
             "sentBy": { ".validate": "newData.isString()" },
             "at": { ".validate": "newData.isNumber()" },
@@ -1015,7 +1015,7 @@ git commit -m "Add rules for activity, votes, bots and cross-examination votes"
 
 **Interfaces:**
 - Consumes: `TOPIC_IDS`, `VERDICT_IDS` (Task 4).
-- Produces in `api.js`: `MAX_Q = 120`, `MAX_A = 240`, `MAX_BOT_TEXT = 6000`, `MIN_BOT_WORDS = 150`; `createRoom({ …, activity = 1 })` writes `meta.activity`; pure `buildVote({ uid, topic, verdict, q, a, known, total })` and `buildBotVote({ uid, askerTeamId, botTeamId, topic, verdict, q })` (throw `Error("invalid topic")` / `Error("invalid verdict")`, trim and clamp strings, omit `askerTeamId` when falsy); `castVote({ code, ...vote })`, `castBotVote({ code, ...vote })`, `sendBot({ code, teamId, uid, text, sources })`; `resetBoard({ code, activity = 1 })`.
+- Produces in `api.js`: `MAX_Q = 120`, `MAX_A = 240`, `MAX_OWN_TEXT = 6000`, `MAX_BOT_TEXT = 50000`, `MIN_BOT_WORDS = 150`; `createRoom({ …, activity = 1 })` writes `meta.activity`; pure `buildVote({ uid, topic, verdict, q, a, known, total })` and `buildBotVote({ uid, askerTeamId, botTeamId, topic, verdict, q })` (throw `Error("invalid topic")` / `Error("invalid verdict")`, trim and clamp strings, omit `askerTeamId` when falsy); `castVote({ code, ...vote })`, `castBotVote({ code, ...vote })`, `sendBot({ code, teamId, uid, text, sources })`; `resetBoard({ code, activity = 1 })`.
 - Produces in `hooks.js`: `useVotes(code, enabled)`, `useBots(code, enabled)`, `useBotVotes(code, enabled)`, `useTeamBot(code, teamId)` — same shapes as the existing `usePath`-based hooks.
 
 - [ ] **Step 1: Add failing tests**
@@ -1041,7 +1041,8 @@ describe("buildVote / buildBotVote", () => {
     expect(c.askerTeamId).toBe("tA");
   });
   it("limits", () => {
-    expect(MAX_BOT_TEXT).toBe(6000);
+    expect(MAX_BOT_TEXT).toBe(50000);
+    expect(MAX_OWN_TEXT).toBe(6000);
     expect(MIN_BOT_WORDS).toBe(150);
   });
 });
@@ -1072,7 +1073,8 @@ Add imports and constants near the top:
 import { TOPIC_IDS, VERDICT_IDS } from "../lm/scoring.js";
 export const MAX_Q = 120;
 export const MAX_A = 240;
-export const MAX_BOT_TEXT = 6000;
+export const MAX_OWN_TEXT = 6000;
+export const MAX_BOT_TEXT = 50000;
 export const MIN_BOT_WORDS = 150;
 ```
 Change `createRoom`'s signature and meta:
@@ -1797,7 +1799,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 vi.mock("../rooms/hooks.js", () => ({ useTeamBot: () => ({ value: null, loading: false }) }));
 const api = { sendBot: vi.fn(() => Promise.resolve()) };
-vi.mock("../rooms/api.js", () => ({ sendBot: (...a) => api.sendBot(...a), MAX_BOT_TEXT: 6000, MIN_BOT_WORDS: 150 }));
+vi.mock("../rooms/api.js", () => ({ sendBot: (...a) => api.sendBot(...a), MAX_BOT_TEXT: 50000, MAX_OWN_TEXT: 6000, MIN_BOT_WORDS: 150 }));
 
 import { TrainBot } from "./TrainBot.jsx";
 

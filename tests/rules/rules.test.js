@@ -247,10 +247,10 @@ describe("bots", () => {
     await assertSucceeds(db("s1").ref(path("bots/tA")).set(bot));
     await assertFails(db("s1").ref(path("bots/tB")).set(bot));
   });
-  it("text is bounded 1..6000", async () => {
+  it("text is bounded 1..50000", async () => {
     await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "" }));
-    await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(6001) }));
-    await assertSucceeds(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(6000) }));
+    await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(50001) }));
+    await assertSucceeds(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(50000) }));
   });
   it("teacher can wipe bots", async () => {
     await env.withSecurityRulesDisabled((ctx) => ctx.database().ref(path("bots/tA")).set(bot));
