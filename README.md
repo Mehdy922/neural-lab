@@ -46,6 +46,48 @@ Troubleshooting:
 
 Teacher tips, run sheet and the one rule are in the **Settings** tab inside the room.
 
+### Activity 2 · Talk to the machine
+
+1. On the first screen, choose **Activity 2 · Talk to the machine** instead of Activity 1 (Teacher and Student join the same way after that).
+2. Students join and form teams exactly as in Activity 1.
+3. Press **Start chatting**. Students ask HistoryBot anything and vote Right / Wrong / Nonsense on its answer.
+   They'll see: *"HistoryBot has read one thing in its life: 2,000 words about South Asian history. Ask it anything."*
+4. Press **Reveal scoreboard**. Open the Scoreboard tab on the projector — accuracy on history vs. everything
+   else, broken down by topic.
+5. Press **Start training**. Each team picks a starter text (biology, cricket, cooking, space, folktales or
+   history) for its own bot, trains it, and sends it.
+6. Press **Open cross-examination**. Every team now questions strangers' bots and votes on the answers.
+   They'll see: *"Every bot is now questioned by strangers. Which one survived?"* The leaderboard ranks bots
+   by how well they do on questions from OUTSIDE their own team.
+
+`npm run simulate -- --activity 2` runs this whole flow against bots for a dry run — see **Bot simulator** below.
+
+Because this activity adds `votes`, `bots` and `botVotes` to `database.rules.json`, any already-deployed
+project's live rules must be republished (setup step 4) before running Activity 2 for real.
+
+## Bot simulator
+
+`scripts/simulate.mjs` plays a full lesson against bots (one anonymous Firebase user per student, exactly
+like a phone in class) so you can rehearse before class or sanity-check a change to the rules.
+
+```bash
+npm run simulate                                          # Activity 1, 9 students, 3 max teams
+npm run simulate -- --students 12 --max-teams 4 --rounds 2 --keep
+npm run simulate -- --activity 2 --students 10 --max-teams 4 --hold 300
+```
+
+- `--activity 2` runs "Talk to the machine" instead of the default "Teach the machine": create the room →
+  students join and form teams → `chat` (every student asks HistoryBot 3 questions and votes, then the topic
+  table prints) → `reveal` → `train` (each team trains a bot from a starter text and sends it) → `exam`
+  (every student cross-examines two other teams' bots, then the leaderboard prints) → the three activity-2
+  rule checks (phase write, another team's bot, editing a vote) → cleanup.
+- `--students N` / `--max-teams M` control the class size and number of teams the same way for both activities.
+- `--hold S` keeps the finished room open for S seconds (e.g. to look at it on a phone) before cleaning up;
+  `--keep` leaves the room in the database instead of cleaning up at all.
+- Rule checks expect writes to be DENIED and are skipped automatically when run against the local emulator
+  (`FIREBASE_DATABASE_EMULATOR_HOST` set, or `--emulator`) — production sign-in tokens are admin there, so
+  `npm run test:rules` is what actually exercises the rules.
+
 ## The lesson slides
 
 `slides/Neural-Lab-Lesson.pptx` is a 30–40 minute lesson for grades 9–12 that runs *before* the activity
