@@ -30,4 +30,12 @@ describe("TrainBot", () => {
     await Promise.resolve();
     expect(api.sendBot).toHaveBeenCalledWith(expect.objectContaining({ code: "ABCDE", teamId: "tA", uid: "u1", sources: ["own"] }));
   });
+  it("lets a teacher with no team train and test but not send", () => {
+    render(<TrainBot {...base} isTeacher={true} team={null} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cricket/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Train my bot/ }));
+    const sendBtn = screen.getByRole("button", { name: /Send my bot/ });
+    expect(sendBtn.disabled).toBe(true);
+    expect(screen.getByText("Only a team can send a bot. You can still train and test one here.")).toBeTruthy();
+  });
 });

@@ -67,7 +67,8 @@ export function TrainBot({ code, uid, team, isTeacher, flash }) {
           <>
             <p style={S.hint}>{modelStats(model).words.toLocaleString()} words read · {modelStats(model).vocab.toLocaleString()} different words. Ask it about its topic, then about something else.</p>
             <BotChat model={model} botName={team ? `${team.name}'s bot` : "Your bot"} requireTopic={false} requireVote={false} placeholder="Test your bot…" />
-            <button className="nl-btn" style={S.send} disabled={sending} onClick={send}>{sending ? "Sending…" : "Send my bot to the class 🤖"}</button>
+            <button className="nl-btn" style={S.send} disabled={sending || !team} onClick={send}>{sending ? "Sending…" : "Send my bot to the class 🤖"}</button>
+            {!team && <p style={S.hintText}>Only a team can send a bot. You can still train and test one here.</p>}
           </>
         ) : (
           <p style={S.empty}>Train it first. Then ask it a few questions here before you send it.</p>
