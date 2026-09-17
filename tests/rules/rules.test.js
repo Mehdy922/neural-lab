@@ -206,3 +206,72 @@ describe("multi-path updates used by the client", () => {
     await assertSucceeds(db(TEACHER).ref(`rooms/${CODE}`).update({ models: null, challenges: null, "meta/phase": "teach" }));
   });
 });
+
+describe("activity 2 meta", () => {
+  it("activity must be 1 or 2", async () => {
+    await assertSucceeds(db(TEACHER).ref(path("meta")).update({ activity: 2 }));
+    await assertSucceeds(db(TEACHER).ref(path("meta")).update({ activity: 1 }));
+    await assertFails(db(TEACHER).ref(path("meta")).update({ activity: 3 }));
+    await assertFails(db(TEACHER).ref(path("meta")).update({ activity: "2" }));
+  });
+  it("accepts the activity 2 phases", async () => {
+    for (const p of ["chat", "reveal", "train", "exam"]) await assertSucceeds(db(TEACHER).ref(path("meta")).update({ phase: p }));
+    await assertFails(db(TEACHER).ref(path("meta")).update({ phase: "quiz" }));
+  });
+});
+
+describe("votes (HistoryBot)", () => {
+  const vote = (uid) => ({ uid, topic: "science", verdict: "wrong", q: "What is a cell?", a: "Akbar built a city.", known: 0, total: 2, at: 1 });
+  it("a student can create a vote in their own name, once", async () => {
+    await assertSucceeds(db("s1").ref(path("votes/v1")).set(vote("s1")));
+    await assertFails(db("s1").ref(path("votes/v1")).update({ verdict: "right" }));
+    await assertFails(db("s1").ref(path("votes/v1")).remove());
+  });
+  it("cannot vote as someone else or with bad values", async () => {
+    await assertFails(db("s1").ref(path("votes/v2")).set(vote("s2")));
+    await assertFails(db("s1").ref(path("votes/v3")).set({ ...vote("s1"), topic: "gossip" }));
+    await assertFails(db("s1").ref(path("votes/v4")).set({ ...vote("s1"), verdict: "maybe" }));
+    await assertFails(db("s1").ref(path("votes/v5")).set({ ...vote("s1"), q: "x".repeat(121) }));
+    await assertFails(db("s1").ref(path("votes/v6")).set({ ...vote("s1"), a: "x".repeat(241) }));
+  });
+  it("only the teacher can wipe votes", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.database().ref(path("votes/v9")).set(vote("s1")));
+    await assertFails(db("s1").ref(path("votes")).remove());
+    await assertSucceeds(db(TEACHER).ref(path("votes")).remove());
+  });
+});
+
+describe("bots", () => {
+  const bot = { text: "Akbar ruled the Mughal empire from Agra. Babur founded it.", sources: ["history"], sentBy: "s1", at: 1 };
+  it("a member writes their own team's bot; not another team's", async () => {
+    await assertSucceeds(db("s1").ref(path("bots/tA")).set(bot));
+    await assertFails(db("s1").ref(path("bots/tB")).set(bot));
+  });
+  it("text is bounded 1..6000", async () => {
+    await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "" }));
+    await assertFails(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(6001) }));
+    await assertSucceeds(db("s1").ref(path("bots/tA")).set({ ...bot, text: "x".repeat(6000) }));
+  });
+  it("teacher can wipe bots", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.database().ref(path("bots/tA")).set(bot));
+    await assertFails(db("s2").ref(path("bots")).remove());
+    await assertSucceeds(db(TEACHER).ref(path("bots")).remove());
+  });
+});
+
+describe("botVotes (cross-examination)", () => {
+  const bv = (uid) => ({ uid, askerTeamId: "tA", botTeamId: "tB", topic: "sport", verdict: "nonsense", q: "Who won in 1992?", at: 1 });
+  it("create-only, own uid, valid enums", async () => {
+    await assertSucceeds(db("s1").ref(path("botVotes/b1")).set(bv("s1")));
+    await assertSucceeds(db("s3").ref(path("botVotes/b2")).set({ uid: "s3", botTeamId: "tA", topic: "other", verdict: "right", q: "q", at: 1 })); // no team
+    await assertFails(db("s1").ref(path("botVotes/b1")).update({ verdict: "right" }));
+    await assertFails(db("s1").ref(path("botVotes/b3")).set(bv("s2")));
+    await assertFails(db("s1").ref(path("botVotes/b4")).set({ ...bv("s1"), topic: "gossip" }));
+  });
+  it("teacher can reset activity 2 in one update; a student cannot", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.database().ref(path("votes/v1")).set({ uid: "s1", topic: "history", verdict: "right", q: "q", at: 1 }));
+    const upd = { votes: null, bots: null, botVotes: null, "meta/phase": "chat" };
+    await assertFails(db("s1").ref(`rooms/${CODE}`).update(upd));
+    await assertSucceeds(db(TEACHER).ref(`rooms/${CODE}`).update(upd));
+  });
+});

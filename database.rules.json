@@ -11,7 +11,8 @@
           "teamCap": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 12" },
           "maxTeams": { ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 20" },
           "round": { ".validate": "newData.isNumber() && newData.val() >= 1" },
-          "phase": { ".validate": "newData.isString() && (newData.val() === 'lobby' || newData.val() === 'teach' || newData.val() === 'reveal' || newData.val() === 'fence')" },
+          "activity": { ".validate": "newData.isNumber() && (newData.val() === 1 || newData.val() === 2)" },
+          "phase": { ".validate": "newData.isString() && (newData.val() === 'lobby' || newData.val() === 'teach' || newData.val() === 'reveal' || newData.val() === 'fence' || newData.val() === 'chat' || newData.val() === 'train' || newData.val() === 'exam')" },
           "labels": {
             "$i": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24" }
           },
@@ -80,6 +81,52 @@
               ".validate": "newData.hasChildren(['teamId', 'teamName', 'neurons'])",
               "neurons": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 8" }
             }
+          }
+        },
+
+        "votes": {
+          ".write": "auth != null && root.child('rooms/' + $code + '/meta/teacherUid').val() === auth.uid",
+          "$id": {
+            ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['uid', 'topic', 'verdict', 'q'])",
+            "uid": { ".validate": "newData.isString()" },
+            "topic": { ".validate": "newData.isString() && (newData.val() === 'history' || newData.val() === 'science' || newData.val() === 'sport' || newData.val() === 'maths' || newData.val() === 'everyday' || newData.val() === 'other')" },
+            "verdict": { ".validate": "newData.isString() && (newData.val() === 'right' || newData.val() === 'wrong' || newData.val() === 'nonsense')" },
+            "q": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" },
+            "a": { ".validate": "newData.isString() && newData.val().length <= 240" },
+            "known": { ".validate": "newData.isNumber()" },
+            "total": { ".validate": "newData.isNumber()" },
+            "at": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "bots": {
+          ".write": "auth != null && root.child('rooms/' + $code + '/meta/teacherUid').val() === auth.uid",
+          "$teamId": {
+            ".write": "auth != null && root.child('rooms/' + $code + '/members/' + auth.uid + '/teamId').val() === $teamId",
+            ".validate": "newData.hasChildren(['text', 'sentBy'])",
+            "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 6000" },
+            "sources": { "$i": { ".validate": "newData.isString() && newData.val().length <= 24" } },
+            "sentBy": { ".validate": "newData.isString()" },
+            "at": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "botVotes": {
+          ".write": "auth != null && root.child('rooms/' + $code + '/meta/teacherUid').val() === auth.uid",
+          "$id": {
+            ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['uid', 'botTeamId', 'topic', 'verdict', 'q'])",
+            "uid": { ".validate": "newData.isString()" },
+            "askerTeamId": { ".validate": "newData.isString()" },
+            "botTeamId": { ".validate": "newData.isString()" },
+            "topic": { ".validate": "newData.isString() && (newData.val() === 'history' || newData.val() === 'science' || newData.val() === 'sport' || newData.val() === 'maths' || newData.val() === 'everyday' || newData.val() === 'other')" },
+            "verdict": { ".validate": "newData.isString() && (newData.val() === 'right' || newData.val() === 'wrong' || newData.val() === 'nonsense')" },
+            "q": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" },
+            "at": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
           }
         },
 
