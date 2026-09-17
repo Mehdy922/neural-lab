@@ -177,8 +177,8 @@ nonsense}. Subscriptions: `votes` only while Chat/Scoreboard mounted; `bots` and
 ## 11. Screens and files
 
 ```
-src/lm/tokenize.js         tokenize, detokenize, STOPWORDS, contentWords
-src/lm/ngram.js            trainModel, coverage, generate, hashString
+src/lm/tokenize.js         tokenize, detokenize, STOPWORDS, contentWords, hashString
+src/lm/ngram.js            trainModel, coverage, generate
 src/lm/scoring.js          topicAccuracy(votes), botLeaderboard(botVotes, teams, bots),
                            botTopicTallies, nonsenseOfTheDay
 src/lm/projectorFilter.js  PROJECTOR_DENYLIST, isProjectorSafe

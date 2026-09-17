@@ -1,7 +1,7 @@
 # Neural Lab Classroom — Design Spec
 
 Date: 2026-09-11
-Status: approved by user (design sections 1–9 in chat), pending spec review
+Status: shipped — see Amendments (2026-09-17) at the end for where the app differs from sections 2–6
 
 ## 1. Purpose
 
@@ -286,3 +286,27 @@ The prototype's dark indigo "ajrak" palette is replaced.
 5. Deploy rules: either paste `database.rules.json` into the Rules tab, or
    `npx firebase deploy --only database` after `firebase login`.
 6. Repo → Settings → Pages → Source: GitHub Actions. Push to `main` deploys.
+
+## Amendments (2026-09-17)
+
+Status: shipped. Where the app as built differs from the sections above:
+
+- **First screen is the activity chooser** (`ActivityPick`: Activity 1 · Teach the
+  machine, Activity 2 · Talk to the machine), then Teacher / Student. The room stores
+  `meta.activity`; a student's pick is irrelevant once they enter a room code. Activity 2
+  has its own spec, `2026-09-17-activity-2-talk-to-the-machine-design.md`.
+- **Phase controls live in the PhaseBar** (`components/PhaseBar.jsx`), shown above every
+  teacher tab, not in Settings. Settings keeps the label pair, team cap, max teams, Reset
+  board, Close room, the run sheet and the teacher notes.
+- **The fence button is "Open bendy fence"** (not "Open fence"); the tab is "Bendy fence".
+  Button labels are single-sourced in `rooms/phases.js` (`PHASE_ACTIONS_BY_ACTIVITY`).
+- **Rounds exist.** `meta.round` (starts at 1); at `reveal` the teacher can press
+  **Next round**, which writes that round's own/strangers scores to `rounds/{n}`, clears
+  `models`, sets `meta.round = n + 1` and returns to `teach`. Teams keep their drawings on
+  their phones and send again; the next reveal shows each team's change.
+- **Reset board** (activity 1) clears `models`, `challenges` and `rounds`, resets
+  `meta.round` to 1 and returns to `teach`. Teams and members stay.
+- **`meta.maxTeams`** (optional, 2–20) caps the number of teams; blank means no limit. With
+  a limit, students can only join existing teams once that many are made.
+- **Hooks live in `rooms/hooks.js`** (`useRoom`, `useTeamModel`, `useTeamBot`, …), not
+  `useRoom.js`.

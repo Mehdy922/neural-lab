@@ -1,9 +1,10 @@
 # Neural Lab
 
-A classroom web app: teams draw two things, train a real tiny neural network in the
-browser, score ~100% on their own drawings, then watch the number collapse when their
-model meets other teams' drawings. Overfitting and dataset bias, discovered rather than
-defined. Second period: Bendy Fence (dots, a 1–8 neuron slider, class challenges).
+Two 40-minute lessons on what a machine really learns. Lesson 1 · Teach the machine: teams draw two things, train a tiny neural network, and watch their ~100% collapse on other teams' drawings. Lesson 2 · Talk to the machine: everyone questions HistoryBot, a bot that has read one 2,000-word text, votes on its answers, then trains and cross-examines bots of their own. Both run in the browser on phones; the teacher projects one tab.
+
+A lesson is a slide deck plus an activity in the app. The decks are in `slides/` (see **The lesson slides**
+below); the activities are in the app, one room per class, and run as described under **Running Lesson 1**
+and **Running Lesson 2**.
 
 Live: https://mehdy922.github.io/neural-lab/
 
@@ -35,21 +36,21 @@ Troubleshooting:
 - `auth/unauthorized-domain` → see step 7 (Authorized domains).
 - Students see "permission denied" toasts → step 4 (rules) not published, or published to a different database.
 
-## Running a lesson
+## Running Lesson 1 · Teach the machine
 
 1. Open the live URL → choose **1 · Teach the machine** → **Teacher** → set the pair (default Mango vs Cricket ball; try Sun vs Flower), max students per team, and optionally a max number of teams (2–20; blank = no limit) → **Create room**. Teams don't need to be full: a team of 2 and a team of 4 both count. All of these can be changed later in **Settings**.
 2. Put the Lobby on the projector: room code + QR.
-3. Students: open the URL → **Student** → code + name → create or join a team.
-4. Press **Start teaching**. Students draw 5 of each, **Train**, test with **What is it?**, then **Send my machine to the class**.
-5. Press **Reveal tournament**. Open the Tournament tab on the projector. Wait for the noise.
+3. Students: scan the QR (it skips straight to the join form) or open the URL → any activity card → **Student** → code + name. The room decides the activity, not the student's pick. Then they make a team or tap one to join it. If someone is stuck in a team: Lobby → move a student between teams.
+4. Press **Start teaching**. Students draw 5 of each (4 at least), **Train**, test with **What is it?**, then **Send my machine to the class**.
+5. Press **Reveal tournament**. Open the Tournament tab on the projector. Wait for the noise. If the class is hooked, **Next round**: teams add drawings, retrain and send again, and the next reveal shows each team's change.
 6. Second period: **Open bendy fence**.
 
-Teacher tips, run sheet and the one rule are in the **Settings** tab inside the room.
+Teacher tips, run sheet, the read-aloud script and the one rule are in the **Settings** tab inside the room.
 
-### Activity 2 · Talk to the machine
+## Running Lesson 2 · Talk to the machine
 
-1. On the first screen, choose **Activity 2 · Talk to the machine** instead of Activity 1 (Teacher and Student join the same way after that).
-2. Students join and form teams exactly as in Activity 1.
+1. On the first screen, choose **2 · Talk to the machine** → **Teacher** → **Create room** (no drawing pair this time; team size and max teams as in Lesson 1).
+2. Students join and form teams exactly as in Lesson 1 — any activity card leads to the same join form; the room decides.
 3. Press **Start chatting**. Students ask HistoryBot anything and vote Right / Wrong / Nonsense on its answer.
    They'll see: *"HistoryBot has read one thing in its life: 2,000 words about South Asian history. Ask it anything."*
    Put the Scoreboard tab on the projector now — until you reveal, it shows only the feed of latest questions and
@@ -59,18 +60,30 @@ Teacher tips, run sheet and the one rule are in the **Settings** tab inside the 
    and then the **Show me everything it has ever read** button — the bot's whole training text on one screen, with
    the words it recognised from the highlighted question marked. Tap a feed item to change which question is
    highlighted; tap ✕ to hide one.
-5. Press **Start training**. Each team picks a starter text (biology, cricket, cooking, space, folktales or
-   history) for its own bot, trains it, and sends it.
+5. Press **Start training**. Each team picks a starter text (The living body, Cricket, In the kitchen, Space,
+   Folk tales, South Asian history) and/or pastes its own for its bot, trains it, tries it, and sends it.
 6. Press **Open cross-examination**. Every team now questions strangers' bots and votes on the answers.
    They'll see: *"Every bot is now questioned by strangers. Which one survived?"* The leaderboard ranks bots
-   by how well they do on questions from OUTSIDE their own team.
+   by how well they do on questions from OUTSIDE their own team; the Scoreboard on the projector adds a
+   topic strip per bot — every bot has one bump, where its text was.
 
 The Settings tab carries a run sheet and a read-aloud teacher script for every phase.
 
 `npm run simulate -- --activity 2` runs this whole flow against bots for a dry run — see **Bot simulator** below.
 
 Because this activity adds `votes`, `bots` and `botVotes` to `database.rules.json`, any already-deployed
-project's live rules must be republished (setup step 4) before running Activity 2 for real.
+project's live rules must be republished (setup step 4) before running Lesson 2 for real.
+
+### Room controls (both lessons)
+
+- One phone sends per team — the machine in Lesson 1, the bot in Lesson 2. Sending again replaces what the
+  team sent; the Teach it / Train your bot tab says who sent the current one.
+- Hiding a feed item (✕) and highlighting a question act on the device that is showing the projector, not
+  on students' phones.
+- **Settings → Reset board** is per activity and keeps the teams. Lesson 1: wipes the sent machines,
+  challenges and round scores and goes back to round 1 of Teach it. Lesson 2: wipes the questions, votes and
+  bots and goes back to chatting.
+- **Settings → Close room** at the end, so nobody rejoins it next lesson.
 
 ## Bot simulator
 
@@ -119,12 +132,13 @@ npm run build
 ## After the first deploy
 
 - Bookmark the room URL you create — the teacher role is tied to this browser (anonymous sign-in). Clearing site data or switching browsers means creating a new room.
-- To re-use the app next term: open the live URL → Teacher → Create room. Old rooms stay in the database until you delete them in the Firebase console (Realtime Database → `rooms`).
+- To re-use the app next term: open the live URL → choose the activity → **Teacher** → Create room. Old rooms stay in the database until you delete them in the Firebase console (Realtime Database → `rooms`).
 
 ## Layout
 
 - `src/ml/` — the network, drawing capture (auto-crop + centre), cross-scoring
+- `src/lm/` — tokenizer, trigram model, texts, projector filter
 - `src/rooms/` — room codes, phases, RTDB API, live-state hooks
-- `src/screens/` — Landing, TeacherCreate, StudentJoin, Room, Lobby, Teach, Tournament, Fence, Settings
+- `src/screens/` — ActivityPick, Landing, TeacherCreate, StudentJoin, Room, Lobby, Teach, Tournament, Fence, Chat, Scoreboard, TrainBot, Exam, Settings
 - `database.rules.json` — who may write what
-- `docs/superpowers/specs/` — design spec; `docs/prototype/` — original single-file prototype
+- `docs/superpowers/specs/` — design specs (one per lesson); `docs/prototype/` — original single-file prototype
