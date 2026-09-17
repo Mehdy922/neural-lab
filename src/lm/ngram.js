@@ -66,6 +66,7 @@ export function generate(model, question, { seed = 0, maxWords = 40, minWords = 
     w1 = pick(model.starts, rand) || pick(model.uni, rand, isWord);
     w2 = model.bi[w1] ? pick(model.bi[w1], rand, isWord) : null;
   }
+  if (!w1) return { text: "", seededFrom: "random", words: 0 };
 
   const out = [w1];
   if (w2) out.push(w2);

@@ -68,3 +68,12 @@ describe("generate", () => {
     expect(outs.size).toBeGreaterThan(1);
   });
 });
+
+describe("degenerate model", () => {
+  it("does not throw on an empty-vocabulary model", () => {
+    const empty = trainModel("");
+    expect(() => generate(empty, "anything")).not.toThrow();
+    expect(generate(empty, "anything")).toEqual({ text: "", seededFrom: "random", words: 0 });
+    expect(coverage(empty, "anything").known).toBe(0);
+  });
+});
