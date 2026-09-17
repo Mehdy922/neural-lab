@@ -33,7 +33,7 @@ export function BotChat({ model, botName = "HistoryBot", requireTopic = true, re
     onAsk?.(upd);
   };
   const vote = (v) => {
-    if (!last) return;
+    if (!last || last.verdict) return;
     const upd = { ...last, verdict: v };
     setEntries((es) => [...es.slice(0, -1), upd]); setHint("");
     onVote?.(upd, v);
@@ -70,7 +70,7 @@ export function BotChat({ model, botName = "HistoryBot", requireTopic = true, re
                 {isLast && (
                   <div style={S.voteRow}>
                     {requireVote && VERDICTS.map((v) => (
-                      <button key={v.id} type="button" className="nl-btn" style={{ ...S.voteBtn, ...(en.verdict === v.id ? S.voteBtnOn : null) }} onClick={() => vote(v.id)}>
+                      <button key={v.id} type="button" className="nl-btn" disabled={!!en.verdict} style={{ ...S.voteBtn, ...(en.verdict === v.id ? S.voteBtnOn : null) }} onClick={() => vote(v.id)}>
                         <span aria-hidden="true">{v.emoji}</span> {v.label}
                       </button>
                     ))}

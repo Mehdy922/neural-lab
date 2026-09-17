@@ -34,6 +34,16 @@ describe("Scoreboard", () => {
     expect(screen.getByText("It never once said 'I don't know'. Why not?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Show me everything it has ever read" })).toBeTruthy();
   });
+  it("shows the cross-examination leaderboard even while still waiting on votes for the headline and bars", () => {
+    votesValue = { a: v("history", "right", 1) };
+    botsValue = { tA: { text: "x" }, tB: { text: "y" } };
+    botVotesValue = {
+      1: { uid: "u", askerTeamId: "tB", botTeamId: "tA", topic: "history", verdict: "right", q: "q", at: 1 },
+    };
+    render(<Scoreboard {...base} meta={{ phase: "exam", activity: 2 }} />);
+    expect(screen.getByText("Every bot is now questioned by strangers. Which one survived?")).toBeTruthy();
+    expect(screen.getByText(/waiting for questions/i)).toBeTruthy();
+  });
   it("shows the cross-examination leaderboard once the exam is open", () => {
     votesValue = many();
     botsValue = { tA: { text: "x" }, tB: { text: "y" } };

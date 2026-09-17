@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { S, C } from "../theme.js";
+import { S } from "../theme.js";
 import { HISTORY_TEXT } from "../lm/texts/index.js";
 import { trainModel, modelStats } from "../lm/ngram.js";
 import { castVote } from "../rooms/api.js";

@@ -90,8 +90,8 @@ activity 2. Activity 1 phases/tabs are untouched.
   history. Ask it anything."
 - Flow per question: pick a topic chip (History · Science · Sport · Maths · Everyday ·
   Other) → type question (≤ 120 chars) → **Ask** → answer bubble + coverage line →
-  vote **Right / Wrong / Nonsense** (required before next ask; "Ask again" allowed and
-  re-votes replace). Verdict writes `votes/{id}`.
+  vote **Right / Wrong / Nonsense** (required before next ask; one vote per answer —
+  "Ask again" produces a new answer with its own vote). Verdict writes `votes/{id}`.
 - My history of Q&A on the phone (session only).
 - **"Show me everything it has ever read"**: expands the full history text; words from
   the last question that the bot recognised are highlighted.
@@ -99,7 +99,7 @@ activity 2. Activity 1 phases/tabs are untouched.
 
 ## 6. Scoreboard (screen `Scoreboard`, projector)
 
-- Per-topic bars: % Right, with counts. Sorted with History first, others by n.
+- Per-topic bars: % Right, with counts. Fixed topic order (History first) so bars don't jump on the projector.
 - Headline: "It answered N questions. It was right about X% of history and Y% of
   everything else."
 - Feed: latest 8 Q&As (question, answer, topic, verdict, coverage) — refreshes live.

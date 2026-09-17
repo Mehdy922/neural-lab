@@ -41,53 +41,53 @@ export function Scoreboard({ code, teams, meta }) {
               </div>
             ))}
           </div>
+        </>
+      )}
 
-          <div style={S.qBox}>
-            <div style={S.qKick}>Work this out before anyone tells you</div>
-            <p style={S.q}>It answered every single question, in full sentences, without hesitating. Look at the bars.</p>
-            <p style={S.qBig}>It never once said 'I don't know'. Why not?</p>
-          </div>
+      <div style={S.qBox}>
+        <div style={S.qKick}>Work this out before anyone tells you</div>
+        <p style={S.q}>It answered every single question, in full sentences, without hesitating. Look at the bars.</p>
+        <p style={S.qBig}>It never once said 'I don't know'. Why not?</p>
+      </div>
 
-          <div style={{ ...S.card, marginTop: 20 }}>
-            <h2 style={S.h2}>Latest questions</h2>
-            <div style={{ display: "grid", gap: 8 }}>
-              {feed.map((f, i) => (
-                <div key={i} style={S.feedItem}>
-                  <div style={{ fontWeight: 800 }}><span aria-hidden="true">{topicEmoji(f.topic)}</span> {f.q}</div>
-                  <div style={{ color: C.muted }}>{f.a}</div>
-                  <div style={S.coverage}>{verdictEmoji(f.verdict)} {f.verdict} · recognised {f.known} of {f.total} words</div>
+      <div style={{ ...S.card, marginTop: 20 }}>
+        <h2 style={S.h2}>Latest questions</h2>
+        <div style={{ display: "grid", gap: 8 }}>
+          {feed.map((f, i) => (
+            <div key={i} style={S.feedItem}>
+              <div style={{ fontWeight: 800 }}><span aria-hidden="true">{topicEmoji(f.topic)}</span> {f.q}</div>
+              <div style={{ color: C.muted }}>{f.a}</div>
+              <div style={S.coverage}>{verdictEmoji(f.verdict)} {f.verdict} · recognised {f.known} of {f.total} words</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ ...S.card, marginTop: 20 }}>
+        <button className="nl-btn" style={S.accent} onClick={() => setShowCorpus((v) => !v)}>
+          {showCorpus ? "Hide what it has read" : "Show me everything it has ever read"}
+        </button>
+        {showCorpus && <div style={{ marginTop: 14 }}><Corpus text={HISTORY_TEXT} /></div>}
+      </div>
+
+      {examOpen && (
+        <div style={{ marginTop: 28 }}>
+          <h2 style={S.h2}>🎤 Cross-examination</h2>
+          <p style={S.lede}>Every bot is now questioned by strangers. Which one survived?</p>
+          {board.length === 0 ? <p style={S.empty}>No bots sent yet.</p> : (
+            <div style={S.table} role="table" aria-label="Bot leaderboard">
+              <div style={{ ...S.tr, ...S.thead }} role="row"><span>Bot</span><span>Own team</span><span>Strangers</span><span /></div>
+              {board.map((b, i) => (
+                <div key={b.teamId} role="row" style={S.tr}>
+                  <span style={{ fontWeight: 800, color: i === 0 && b.foreign.pct != null ? C.mangoDeep : C.ink }}>{i === 0 && b.foreign.pct != null ? "⭐ " : ""}{b.name}</span>
+                  <span style={{ color: C.muted, fontWeight: 700 }}>{pct(b.own.pct)}</span>
+                  <span style={{ color: barColor(b.foreign.pct), fontWeight: 800 }}>{b.foreign.pct == null ? `${b.foreign.n} asked` : pct(b.foreign.pct)}</span>
+                  <span style={S.barCell}><span style={{ ...S.bar, width: `${(b.foreign.pct || 0) * 100}%`, background: i === 0 ? C.sun : C.sky }} /></span>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div style={{ ...S.card, marginTop: 20 }}>
-            <button className="nl-btn" style={S.accent} onClick={() => setShowCorpus((v) => !v)}>
-              {showCorpus ? "Hide what it has read" : "Show me everything it has ever read"}
-            </button>
-            {showCorpus && <div style={{ marginTop: 14 }}><Corpus text={HISTORY_TEXT} /></div>}
-          </div>
-
-          {examOpen && (
-            <div style={{ marginTop: 28 }}>
-              <h2 style={S.h2}>🎤 Cross-examination</h2>
-              <p style={S.lede}>Every bot is now questioned by strangers. Which one survived?</p>
-              {board.length === 0 ? <p style={S.empty}>No bots sent yet.</p> : (
-                <div style={S.table} role="table" aria-label="Bot leaderboard">
-                  <div style={{ ...S.tr, ...S.thead }} role="row"><span>Bot</span><span>Own team</span><span>Strangers</span><span /></div>
-                  {board.map((b, i) => (
-                    <div key={b.teamId} role="row" style={S.tr}>
-                      <span style={{ fontWeight: 800, color: i === 0 && b.foreign.pct != null ? C.mangoDeep : C.ink }}>{i === 0 && b.foreign.pct != null ? "⭐ " : ""}{b.name}</span>
-                      <span style={{ color: C.muted, fontWeight: 700 }}>{pct(b.own.pct)}</span>
-                      <span style={{ color: barColor(b.foreign.pct), fontWeight: 800 }}>{b.foreign.pct == null ? `${b.foreign.n} asked` : pct(b.foreign.pct)}</span>
-                      <span style={S.barCell}><span style={{ ...S.bar, width: `${(b.foreign.pct || 0) * 100}%`, background: i === 0 ? C.sun : C.sky }} /></span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           )}
-        </>
+        </div>
       )}
     </main>
   );

@@ -30,22 +30,28 @@ export function normalizeMaxTeams(v) {
 }
 
 // ── rooms ────────────────────────────────────────────────────────────────
+// Pure builder for rooms/{code}/meta. Activity 1 is the pre-activity-2 shape: no
+// `activity` key at all (spec: absent means 1). Only activity 2 writes the key.
+export function buildRoomMeta({ uid, labels = DEFAULT_LABELS, teamCap = DEFAULT_TEAM_CAP, maxTeams = null, activity = 1 }) {
+  const limit = normalizeMaxTeams(maxTeams);
+  return {
+    labels: [cleanLabel(labels[0]) || DEFAULT_LABELS[0], cleanLabel(labels[1]) || DEFAULT_LABELS[1]],
+    teamCap: clampCap(teamCap),
+    ...(limit ? { maxTeams: limit } : {}),
+    ...(Number(activity) === 2 ? { activity: 2 } : {}),
+    round: 1,
+    phase: "lobby",
+    teacherUid: uid,
+    createdAt: serverTimestamp(),
+  };
+}
+
 export async function createRoom({ uid, labels = DEFAULT_LABELS, teamCap = DEFAULT_TEAM_CAP, maxTeams = null, activity = 1 }) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateRoomCode();
     const snap = await get(roomRef(code, "meta"));
     if (snap.exists()) continue;
-    const limit = normalizeMaxTeams(maxTeams);
-    await set(roomRef(code, "meta"), {
-      labels: [cleanLabel(labels[0]) || DEFAULT_LABELS[0], cleanLabel(labels[1]) || DEFAULT_LABELS[1]],
-      teamCap: clampCap(teamCap),
-      ...(limit ? { maxTeams: limit } : {}),
-      activity: Number(activity) === 2 ? 2 : 1,
-      round: 1,
-      phase: "lobby",
-      teacherUid: uid,
-      createdAt: serverTimestamp(),
-    });
+    await set(roomRef(code, "meta"), buildRoomMeta({ uid, labels, teamCap, maxTeams, activity }));
     return code;
   }
   throw new Error("Could not find a free room code. Try again.");
@@ -176,7 +182,7 @@ export const castBotVote = ({ code, ...vote }) => set(push(roomRef(code, "botVot
 export const sendBot = ({ code, teamId, uid, text, sources = [] }) =>
   set(roomRef(code, `bots/${teamId}`), {
     text: clampStr(text, MAX_BOT_TEXT),
-    ...(sources.length ? { sources: sources.slice(0, 8).map((s) => clampStr(s, 24)) } : {}),
+    ...((sources ?? []).length ? { sources: (sources ?? []).slice(0, 8).map((s) => clampStr(s, 24)) } : {}),
     sentBy: uid,
     at: serverTimestamp(),
   });

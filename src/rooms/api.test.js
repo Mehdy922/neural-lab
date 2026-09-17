@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickTests, buildModelPayload, normalizeMaxTeams, summarizeRound, TEST_PER_LABEL, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX, buildVote, buildBotVote, MAX_Q, MAX_A, MAX_BOT_TEXT, MAX_OWN_TEXT, MIN_BOT_WORDS } from "./api.js";
+import { pickTests, buildModelPayload, buildRoomMeta, normalizeMaxTeams, summarizeRound, TEST_PER_LABEL, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX, buildVote, buildBotVote, MAX_Q, MAX_A, MAX_BOT_TEXT, MAX_OWN_TEXT, MIN_BOT_WORDS } from "./api.js";
 import { newNet } from "../ml/net.js";
 
 const mk = (label, v) => ({ label, pix: new Array(4).fill(v) });
@@ -40,6 +40,15 @@ describe("defaults", () => {
   it("labels and cap", () => {
     expect(DEFAULT_LABELS).toEqual(["Mango", "Cricket ball"]);
     expect(DEFAULT_TEAM_CAP).toBe(4);
+  });
+});
+
+describe("buildRoomMeta", () => {
+  it("omits the activity key for activity 1 (byte-identical to pre-activity-2 meta) and writes activity: 2 for activity 2", () => {
+    const one = buildRoomMeta({ uid: "u1", labels: DEFAULT_LABELS, teamCap: 4, activity: 1 });
+    expect(one).not.toHaveProperty("activity");
+    const two = buildRoomMeta({ uid: "u1", labels: DEFAULT_LABELS, teamCap: 4, activity: 2 });
+    expect(two.activity).toBe(2);
   });
 });
 

@@ -31,6 +31,20 @@ describe("BotChat", () => {
     fireEvent.click(screen.getByRole("button", { name: /Nonsense/ }));
     expect(onVote).toHaveBeenCalledWith(expect.objectContaining({ q: "What is a cell?", topic: "science", verdict: "nonsense" }), "nonsense");
   });
+  it("only counts the first vote on an answer; the verdict row is then decided", () => {
+    const onVote = vi.fn();
+    render(<BotChat model={model} onVote={onVote} />);
+    fireEvent.click(screen.getByRole("button", { name: /Science/ }));
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "What is a cell?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    fireEvent.click(screen.getByRole("button", { name: /Right/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Wrong/ }));
+    expect(onVote).toHaveBeenCalledTimes(1);
+    expect(onVote).toHaveBeenCalledWith(expect.objectContaining({ verdict: "right" }), "right");
+    expect(screen.getByRole("button", { name: /Right/ }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: /Wrong/ }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: /Nonsense/ }).disabled).toBe(true);
+  });
   it("Ask again regenerates and clears the vote; requireVote=false hides votes", () => {
     const onAsk = vi.fn();
     render(<BotChat model={model} requireVote={false} requireTopic={false} onAsk={onAsk} />);
