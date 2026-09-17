@@ -395,6 +395,7 @@ git commit -m "Add trigram language model with coverage and seeded generation"
 - Produces: each text module `export default { id, title, emoji, text }`; `index.js` exports `STARTER_TEXTS` (array of the six, with `words` computed), `HISTORY_TEXT` (the history string), `getText(id)`.
 - Requirements for the prose (write it; do not copy from anywhere):
   - Simple English a 14-year-old reads easily; short sentences (≤ 20 words); every sentence ends with `.`, `?` or `!`; no bullet points, no headings, no quotation marks, no dialogue.
+  - The history text must NOT contain any of these words (the behaviour test asks a biology question and needs them unknown): `cell`, `cells`, `made`, `dna`, `carry`, `information`, `blood`, `body`, `heart`. Use "built", "created", "formed", "brought", "army", "people" instead.
   - `history` ≥ 1,800 words, ≤ 2,300: Indus Valley cities and drains; Vedic period; Maurya and Ashoka; Gandhara and Taxila; Arab arrival in Sindh (Muhammad bin Qasim); Ghaznavids and Lahore; Delhi Sultanate; Babur and Panipat; Humayun; Akbar (Fatehpur Sikri, Din-i Ilahi, Rajput alliances); Jahangir; Shah Jahan (Taj Mahal, Lahore Fort, Shalimar); Aurangzeb; decline; Sikh rule under Ranjit Singh; East India Company; 1857; Sir Syed and Aligarh; All-India Muslim League 1906; Allama Iqbal 1930; Lahore Resolution 1940; Jinnah; 14 August 1947; Karachi as first capital. Use recurring names so trigrams chain well.
   - `biology` ≥ 600 words: cells, nucleus, DNA, organs, heart and blood, lungs, digestion, bones and muscles, plants and photosynthesis, bacteria.
   - `cricket` ≥ 600: pitch, overs, batting, bowling, wickets, fielding, Test/ODI/T20, umpires, a match unfolding, Pakistan's 1992 and 2009 wins mentioned plainly.
@@ -996,7 +997,7 @@ Add these three nodes as siblings of `"challenges"` (inside `"$code"`, before th
         },
 ```
 
-- [ ] **Step 4: Run** `npm run test:rules` — Expected: all PASS (31 + 11 = 42). Also `npm test` unchanged.
+- [ ] **Step 4: Run** `npm run test:rules` — Expected: all PASS (31 + 10 = 41). Also `npm test` unchanged.
 
 - [ ] **Step 5: Commit**
 
@@ -1646,7 +1647,7 @@ export function Chat({ code, uid, isTeacher, flash }) {
         <h2 style={S.h2}>💬 HistoryBot</h2>
         <p style={S.lede}>HistoryBot has read one thing in its life: 2,000 words about South Asian history. Ask it anything.</p>
         <p style={S.hint}>Pick the topic of your question, ask, then tell the class whether the answer was right. {isTeacher ? "(Teacher votes are not counted.)" : ""}</p>
-        <BotChat model={model} botName="HistoryBot" onAsk={(en) => setLastKnown(en.knownWords)} onVote={onVote} />
+        <BotChat model={model} botName="HistoryBot" requireVote={!isTeacher} onAsk={(en) => setLastKnown(en.knownWords)} onVote={onVote} />
       </section>
 
       <section style={{ ...S.card, gridColumn: "1 / -1" }}>
@@ -1816,7 +1817,8 @@ describe("TrainBot", () => {
   it("counts own text and sends the combined text with sources", async () => {
     render(<TrainBot {...base} />);
     fireEvent.change(screen.getByLabelText("Your own text"), { target: { value: "word ".repeat(160) } });
-    expect(screen.getByText(/160 words/)).toBeTruthy();
+    expect(screen.getByText(/160 words ·/)).toBeTruthy();   // the counter; the Train button also says "160 words"
+    expect(screen.getByRole("button", { name: /Train my bot \(160 words\)/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Train my bot/ }));
     fireEvent.click(screen.getByRole("button", { name: /Send my bot to the class/ }));
     await Promise.resolve();
@@ -1958,7 +1960,7 @@ export function Exam({ code, uid, teams, team, isTeacher, flash }) {
             {model && (
               <>
                 <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? ` · fed on: ${bots[botId].sources.join(", ")}` : ""}. Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count for strangers." : ""}</p>
-                <BotChat key={botId} model={model} botName={`${name(botId)}'s bot`} onVote={onVote} />
+                <BotChat key={botId} model={model} botName={`${name(botId)}'s bot`} requireVote={!isTeacher} onVote={onVote} />
               </>
             )}
           </>
@@ -2002,7 +2004,7 @@ git commit -m "Add train-your-bot and cross-examination screens"
 ### Task 12: Wire activity 2 into `Room`, `Lobby`, `Settings`
 
 **Files:**
-- Modify: `src/screens/Room.jsx`, `src/screens/Lobby.jsx`, `src/screens/Settings.jsx`, `src/screens/Settings.test.jsx`, `src/components/TeamCard.jsx`
+- Modify: `src/screens/Room.jsx`, `src/screens/Lobby.jsx`, `src/screens/Lobby.test.jsx`, `src/screens/Settings.jsx`, `src/screens/Settings.test.jsx`, `src/components/TeamCard.jsx`
 
 **Interfaces:**
 - RoomProps gains `activity` (1 | 2). `Room` chooses tabs with `visibleTabs(role, phase, activity)`, renders `Chat`, `Scoreboard`, `TrainBot`, `Exam` for their tab keys, passes `activity` to `PhaseBar` and hides Next round for activity 2, header tag shows the activity title for activity 2.
@@ -2057,6 +2059,13 @@ describe("Settings for activity 2", () => {
   const locked = Boolean(myModel.value) || Boolean(myBot.value);
 ```
 - The locked hint text: `"Your team has sent its machine, so you're locked in."` → `` `Your team has sent its ${activity === 2 ? "bot" : "machine"}, so you're locked in.` ``
+- `src/screens/Lobby.test.jsx` mocks `../rooms/hooks.js` with a factory that only defines `useTeamModel`; Vitest throws when a component imports an export the factory lacks. Extend that mock to:
+```js
+vi.mock("../rooms/hooks.js", () => ({
+  useTeamModel: () => ({ value: null, loading: false, error: null }),
+  useTeamBot: () => ({ value: null, loading: false, error: null }),
+}));
+```
 
 - [ ] **Step 5: Edit src/components/TeamCard.jsx** — badge text `model sent ✓` → `sent ✓`. Update `TeamCard.test.jsx`'s locked assertion if it matched "model sent" (it matches `/sent/i`; leave).
 
@@ -2122,7 +2131,7 @@ git commit -m "Simulate activity 2 lessons; document the activity in the README"
 
 ### Task 14: Verification, deploy, live test
 
-- [ ] **Step 1:** `npm test` (expect ≈ 92 + ~45 new), `npm run test:rules` (expect 42), `npm run build`.
+- [ ] **Step 1:** `npm test` (expect ≈ 92 + ~45 new), `npm run test:rules` (expect 41), `npm run build`.
 - [ ] **Step 2:** Push `main`; watch the Pages deploy to success.
 - [ ] **Step 3:** The user republishes `database.rules.json` in the Firebase console (new nodes `votes`, `bots`, `botVotes`, `meta.activity`, new phases are rejected until then).
 - [ ] **Step 4:** `node scripts/simulate.mjs --activity 2 --students 10 --max-teams 4` against live: rule checks all blocked, topic table, leaderboard, cleanup complete. Run once more with `--hold 600` and open the room as a student to check Chat, Scoreboard, Train your bot, Cross-examine on a phone-width window.
