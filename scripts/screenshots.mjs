@@ -1,15 +1,22 @@
-// Capture app screenshots for the slide deck by driving the LIVE site as a student.
+// Capture app screenshots for the slide decks by driving the LIVE site as a student.
 //
 //   node scripts/screenshots.mjs --room CODE [--team "Chai Wallahs"] [--out slides/img]
+//   node scripts/screenshots.mjs --activity 2 --room CODE [--out slides/img]
 //
-// Needs a room that is already in the "fence" phase with a team that has space
-// (e.g. one produced by `npm run simulate -- --rounds 2 --hold 600`).
-// Produces: teach-drawing.png, teach-trained.png, lobby.png, tournament-phone.png, tournament-projector.png
+// Activity 1 needs a room that is already in the "fence" phase with a team that has space
+// (e.g. one produced by `npm run simulate -- --students 12 --max-teams 4 --rounds 2 --hold 600`).
+// Produces: teach-drawing.png, teach-guess.png, teach-trained.png, lobby.png, tournament-phone.png, tournament-projector.png
+//
+// Activity 2 needs a room in the "exam" phase with ≥ 10 votes and a team that has space
+// (e.g. `npm run simulate -- --activity 2 --students 12 --max-teams 4 --hold 600`).
+// Produces: a2-chat-phone.png, a2-trainbot-phone.png, a2-scoreboard.png, a2-corpus.png, a2-exam-strips.png, a2-lobby.png
 
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+import { isProjectorSafe } from "../src/lm/projectorFilter.js";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > -1 ? process.argv[i + 1] : d; };
+const ACTIVITY = Number(arg("activity", 1)) === 2 ? 2 : 1;
 const CODE = arg("room");
 const TEAM = arg("team", "Chai Wallahs");
 const OUT = arg("out", "slides/img");
@@ -21,6 +28,133 @@ mkdirSync(OUT, { recursive: true });
 
 const log = (s) => console.log(`▶ ${s}`);
 const browser = await chromium.launch();
+
+// Open the room and join as a student; resolves once the Lobby's team list is on screen.
+async function joinRoom(pg, name) {
+  await pg.goto(URL, { waitUntil: "networkidle" });
+  await pg.getByLabel("Your name").fill(name);
+  await pg.getByRole("button", { name: /Join/ }).click();
+  await pg.getByRole("heading", { name: /Teams/ }).waitFor({ timeout: 20000 });
+}
+// Scroll the window so `locator` sits `top` CSS px below the viewport's top edge (clamped by the page end).
+async function scrollSo(pg, locator, top) {
+  const box = await locator.boundingBox();
+  await pg.evaluate((dy) => window.scrollBy(0, dy), box.y - top);
+  await pg.waitForTimeout(300);
+}
+
+// ── activity 2: "Talk to the machine" ────────────────────────────────────
+async function shootActivity2() {
+  const QUESTION = "Who built the Taj Mahal?";
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+  const page = await phone.newPage();
+  log(`open ${URL}`);
+  await joinRoom(page, "Aisha");
+  log("joined the room");
+
+  // Join the first team with space (a retry within the same --hold may have filled the usual one).
+  const joinBtn = page.getByRole("button", { name: /^Join$/, disabled: false }).first();
+  await joinBtn.waitFor({ timeout: 15000 });
+  await joinBtn.click();
+  const teamChip = page.getByText(/^Team .+/);
+  await teamChip.waitFor({ timeout: 15000 });
+  log(`joined ${await teamChip.textContent()}`);
+
+  // HistoryBot: History topic, ask, wait out the typing pause, keep the answer if it is fit for a slide, vote Right.
+  log("HistoryBot (phone)");
+  await page.getByRole("tab", { name: /HistoryBot/ }).click();
+  const topics = page.getByRole("group", { name: "Topic of your question" });
+  await topics.waitFor({ timeout: 15000 });
+  await topics.getByRole("button", { name: /History/ }).click();
+  await page.getByRole("textbox", { name: "Your question" }).fill(QUESTION);
+  const typing = page.getByText(/is typing/);
+  const awaitAnswer = async () => {
+    await typing.waitFor({ timeout: 5000 });
+    await typing.waitFor({ state: "detached", timeout: 5000 });
+    await page.getByRole("button", { name: /Right/ }).waitFor({ timeout: 5000 });
+    // The answer is the bare text node of the last bot bubble (after the "🤖 HistoryBot" line).
+    return page.evaluate((who) => {
+      const whos = [...document.querySelectorAll("div")].filter((d) => d.textContent.trim() === who);
+      const bubble = whos.at(-1)?.parentElement;
+      return bubble ? [...bubble.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join("").trim() : "";
+    }, "🤖 HistoryBot");
+  };
+  await page.getByRole("button", { name: /^Ask$/ }).click();
+  let answer = await awaitAnswer();
+  for (let tries = 0; tries < 2 && !(answer && isProjectorSafe(answer)); tries++) {
+    log(`answer "${answer}" is not fit for a slide — asking again`);
+    await page.getByRole("button", { name: /Ask again/ }).click();
+    answer = await awaitAnswer();
+  }
+  log(`HistoryBot said: "${answer}"`);
+  await page.getByRole("button", { name: /Right/ }).click();
+  await page.getByRole("button", { name: /Right/, disabled: true }).waitFor({ timeout: 5000 });
+  await page.waitForTimeout(500);
+  await page.locator(".nl-pop").waitFor({ state: "detached", timeout: 5000 });   // let the "Joined …!" toast go
+  // Frame the whole HistoryBot card: heading, mission, topic chips, question, answer, coverage line, vote.
+  await scrollSo(page, page.getByRole("heading", { name: /HistoryBot/ }), 16);
+  await page.screenshot({ path: `${OUT}/a2-chat-phone.png`, fullPage: false });
+
+  // Train your bot: tick Cricket, train, show the trained state.
+  log("Train your bot (phone)");
+  await page.getByRole("tab", { name: /Train your bot/ }).click();
+  await page.getByRole("heading", { name: /Train your bot/ }).waitFor({ timeout: 15000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByRole("button", { name: /^Cricket/ }).click();
+  await page.getByRole("button", { name: /Train my bot/ }).click();
+  await page.getByPlaceholder("Test your bot…").waitFor({ timeout: 15000 });
+  await page.waitForTimeout(400);
+  await scrollSo(page, page.getByRole("button", { name: /^Cricket/ }), 8);
+  await page.screenshot({ path: `${OUT}/a2-trainbot-phone.png`, fullPage: false });
+  await phone.close();
+
+  // Projector: a student-role desktop window (the teacher's tabs need the bot-teacher's browser).
+  const desk = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
+  const p2 = await desk.newPage();
+  await joinRoom(p2, "Projector");
+
+  log("Scoreboard (projector)");
+  await p2.getByRole("tab", { name: /Scoreboard/ }).click();
+  await p2.getByRole("table", { name: "Accuracy by topic" }).waitFor({ timeout: 20000 });
+  const nonsense = p2.getByText("Nonsense of the day", { exact: true }).locator("xpath=..");   // the kicker's box
+  await nonsense.waitFor({ timeout: 10000 });
+  await p2.waitForTimeout(800);
+  // Headline, bars and "Nonsense of the day" in one frame: clip taller than the viewport if they do not fit.
+  const nb = await nonsense.boundingBox();
+  const bottom = Math.ceil(nb.y + nb.height + 16);
+  if (bottom > 800) log(`scoreboard runs to ${bottom} px — clipping past the 800 px viewport`);
+  await p2.screenshot({ path: `${OUT}/a2-scoreboard.png`, fullPage: bottom > 800, ...(bottom > 800 ? { clip: { x: 0, y: 0, width: 1280, height: bottom } } : {}) });
+
+  log("corpus (projector)");
+  await p2.getByRole("button", { name: "Show me everything it has ever read" }).click();
+  const marks = p2.locator("mark");
+  await marks.first().waitFor({ timeout: 10000 });
+  log(`${await marks.count()} highlighted words in the corpus`);
+  await marks.first().scrollIntoViewIfNeeded();          // scrolls the corpus box so a highlight is on screen
+  await scrollSo(p2, p2.getByRole("button", { name: "Hide what it has read" }), 24);
+  await p2.screenshot({ path: `${OUT}/a2-corpus.png`, fullPage: false });
+
+  log("cross-examination strips (projector)");
+  await p2.getByRole("button", { name: "Hide what it has read" }).click();
+  await p2.getByRole("table", { name: "Bot leaderboard" }).waitFor({ timeout: 20000 });
+  await scrollSo(p2, p2.getByRole("heading", { name: /Cross-examination/ }), 24);
+  await p2.screenshot({ path: `${OUT}/a2-exam-strips.png`, fullPage: false });
+
+  log("lobby (projector)");
+  await p2.getByRole("tab", { name: /Lobby/ }).click();
+  await p2.getByRole("heading", { name: /Teams/ }).waitFor({ timeout: 15000 });
+  await p2.evaluate(() => window.scrollTo(0, 0));
+  await p2.waitForTimeout(600);
+  await p2.screenshot({ path: `${OUT}/a2-lobby.png`, fullPage: false });
+  await desk.close();
+}
+
+if (ACTIVITY === 2) {
+  await shootActivity2();
+  await browser.close();
+  log(`done → ${OUT}/`);
+  process.exit(0);
+}
 
 if (PROJECTOR_ONLY) {
   log("tournament (projector) only");
@@ -42,10 +176,7 @@ const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, 
 const page = await phone.newPage();
 
 log(`open ${URL}`);
-await page.goto(URL, { waitUntil: "networkidle" });
-await page.getByLabel("Your name").fill("Aisha");
-await page.getByRole("button", { name: /Join/ }).click();
-await page.getByRole("heading", { name: /Teams/ }).waitFor({ timeout: 20000 });
+await joinRoom(page, "Aisha");
 log("joined the room");
 
 // Join a team with space.
