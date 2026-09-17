@@ -107,6 +107,8 @@ export function Settings({ code, meta, flash, activity = 1 }) {
           </p>
           {isTalk ? (
             <>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>Before you start</h2>
+              <p style={S.notesP}>Students will ask it about religion. It will answer with random history sentences. Say once, before you start: it does not understand a word you type — that is the point. Questions with a few sensitive words stay off the projector automatically; tap ✕ on any feed item to hide it. Hiding and highlighting work on the device that is showing the projector.</p>
               <p style={S.notesP}>
                 Don't say "it doesn't know" or "it's only trained on history" until the scoreboard is up.
                 Let the students find it. Say: "Ask it something. Was it right? Vote."
@@ -116,8 +118,6 @@ export function Settings({ code, meta, flash, activity = 1 }) {
                 Tap "Show me everything it has ever read" on the projector. Then ask the class: it never
                 once said "I don't know". Why not?
               </p>
-              <h2 style={{ ...S.h2, marginTop: 18 }}>Before you start</h2>
-              <p style={S.notesP}>Students will ask it about religion. It will answer with random history sentences. Say once, before you start: it does not understand a word you type — that is the point. Questions with a few sensitive words stay off the projector automatically; tap ✕ on any feed item to hide it. Hiding and highlighting work on the device that is showing the projector.</p>
               <h2 style={{ ...S.h2, marginTop: 18 }}>Say this</h2>
               <p style={S.notesP}><b>Chat:</b> "There is a bot on your phone. It has read exactly one thing in its life. Ask it anything. Tag the topic, read the answer, then tell me: right, wrong, or nonsense. Be honest — this is a report on it, not a vote for it."</p>
               <p style={S.notesP}><b>Reveal:</b> "Read the headline to me. It answered every single question in full sentences and never once said 'I don't know'. Why not?" Take three answers, agree with none. Then press Show me everything it has ever read: "This is its whole mind. Find the sentence yours came from."</p>

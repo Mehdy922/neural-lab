@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { S, C } from "../theme.js";
-import { STARTER_TEXTS } from "../lm/texts/index.js";
+import { STARTER_TEXTS, getText } from "../lm/texts/index.js";
 import { trainModel, modelStats } from "../lm/ngram.js";
 import { tokenize, isWord } from "../lm/tokenize.js";
 import { sendBot, MAX_BOT_TEXT, MAX_OWN_TEXT, MIN_BOT_WORDS } from "../rooms/api.js";
@@ -8,6 +8,8 @@ import { useTeamBot } from "../rooms/hooks.js";
 import { BotChat } from "../components/BotChat.jsx";
 
 const countWords = (t) => tokenize(t).filter(isWord).length;
+// Source ids are stored ("cricket", "own"); people read titles ("Cricket", "own text").
+const sourceTitles = (ids) => (ids || []).map((id) => (id === "own" ? "own text" : getText(id)?.title || id)).join(", ") || "own text";
 
 export function TrainBot({ code, uid, team, members, isTeacher, flash }) {
   const [picked, setPicked] = useState([]);       // starter ids
@@ -26,8 +28,8 @@ export function TrainBot({ code, uid, team, members, isTeacher, flash }) {
   const send = async () => {
     if (!model) return flash("Train it first.");
     if (!team) return flash(isTeacher ? "Teachers don't enter the cross-examination. Join a team to try it." : "Join a team in the Lobby first.");
-    if (sent.value && !window.confirm(`${team.name} already sent a bot (${(sent.value.sources || []).join(", ") || "own text"}). Replace it?`)) return;
     if (combined.length > MAX_BOT_TEXT) return flash(`Too long to send: keep it under ${MAX_BOT_TEXT.toLocaleString()} characters.`);
+    if (sent.value && !window.confirm(`${team.name} already sent a bot (${sourceTitles(sent.value.sources)}). Replace it?`)) return;
     setSending(true);
     try {
       await sendBot({ code, teamId: team.id, uid, text: combined, sources: [...picked, ...(own.trim() ? ["own"] : [])] });
@@ -76,7 +78,7 @@ export function TrainBot({ code, uid, team, members, isTeacher, flash }) {
           <p style={S.empty}>Train it first. Then ask it a few questions here before you send it.</p>
         )}
         {team && sent.value && (
-          <p style={{ ...S.hint, color: C.leaf, fontWeight: 800 }}>✓ {team.name}'s bot is in ({(sent.value.sources || []).join(", ") || "own text"}), sent by {members?.[sent.value.sentBy]?.name || "a teammate"}. Sending again replaces it.</p>
+          <p style={{ ...S.hint, color: C.leaf, fontWeight: 800 }}>✓ {team.name}'s bot is in ({sourceTitles(sent.value.sources)}), sent by {members?.[sent.value.sentBy]?.name || "a teammate"}. Sending again replaces it.</p>
         )}
       </section>
     </main>

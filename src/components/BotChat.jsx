@@ -39,8 +39,8 @@ export function BotChat({ model, botName = "HistoryBot", requireTopic = true, re
     e?.preventDefault();
     const text = q.trim();
     if (!text) { setHint("Type a question first."); return; }
+    if (needVote) { setHint("Vote on the last answer first."); return; }   // a forgotten vote surfaces before a missing topic
     if (requireTopic && !topic) { setHint("Pick a topic for your question first."); return; }
-    if (needVote) { setHint("Vote on the last answer first."); return; }
     const cov = coverage(model, text);
     const { text: a, seededFrom } = generate(model, text, { seed: 0 });
     const entry = { id: ++idRef.current, q: text, a, topic, ...cov, seededFrom, attempt: 0, verdict: null };
@@ -91,7 +91,7 @@ export function BotChat({ model, botName = "HistoryBot", requireTopic = true, re
               <div style={S.bubbleQ}>{en.q}{en.attempt ? <span style={{ color: C.muted, fontWeight: 700 }}> · try {en.attempt + 1}</span> : null}</div>
               <div style={S.bubbleA}>
                 <div style={S.bubbleWho}><span aria-hidden="true">🤖</span> {botName}</div>
-                {typing ? <span style={{ color: C.muted }}>{botName} is typing…</span> : en.a}
+                {typing ? <span role="status" style={{ color: C.muted }}>{botName} is typing…</span> : en.a}
                 {!typing && <CoverageLine known={en.known} total={en.total} />}
                 {isLast && !typing && (
                   <div style={S.voteRow}>

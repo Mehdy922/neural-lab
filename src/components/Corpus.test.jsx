@@ -13,6 +13,6 @@ describe("Corpus", () => {
     const { container } = render(<Corpus text={"One two.\n\nThree four."} compact />);
     const box = container.firstChild;
     expect(box.style.maxHeight).toBe("none");
-    expect(box.style.columnCount).toBe("3");
+    expect(box.style.columnCount).toBe("5");
   });
 });

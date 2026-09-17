@@ -52,8 +52,13 @@ Teacher tips, run sheet and the one rule are in the **Settings** tab inside the 
 2. Students join and form teams exactly as in Activity 1.
 3. Press **Start chatting**. Students ask HistoryBot anything and vote Right / Wrong / Nonsense on its answer.
    They'll see: *"HistoryBot has read one thing in its life: 2,000 words about South Asian history. Ask it anything."*
-4. Press **Reveal scoreboard**. Open the Scoreboard tab on the projector — accuracy on history vs. everything
-   else, broken down by topic.
+   Put the Scoreboard tab on the projector now — until you reveal, it shows only the feed of latest questions and
+   a running count.
+4. Press **Reveal scoreboard**. The projector now shows the headline (right on history vs. everything else), the
+   bars per topic, the reveal question (*"It never once said 'I don't know'. Why not?"*), **Nonsense of the day**,
+   and then the **Show me everything it has ever read** button — the bot's whole training text on one screen, with
+   the words it recognised from the highlighted question marked. Tap a feed item to change which question is
+   highlighted; tap ✕ to hide one.
 5. Press **Start training**. Each team picks a starter text (biology, cricket, cooking, space, folktales or
    history) for its own bot, trains it, and sends it.
 6. Press **Open cross-examination**. Every team now questions strangers' bots and votes on the answers.

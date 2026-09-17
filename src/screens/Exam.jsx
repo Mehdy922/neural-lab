@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { S, C } from "../theme.js";
 import { useBots, useBotVotes } from "../rooms/hooks.js";
 import { trainModel } from "../lm/ngram.js";
@@ -6,7 +6,10 @@ import { botLeaderboard } from "../lm/scoring.js";
 import { castBotVote } from "../rooms/api.js";
 import { pct } from "../ml/net.js";
 import { hashString } from "../lm/tokenize.js";
+import { getText } from "../lm/texts/index.js";
 import { BotChat } from "../components/BotChat.jsx";
+
+const sourceTitle = (id) => (id === "own" ? "own text" : getText(id)?.title || id);
 
 export function Exam({ code, uid, teams, team, isTeacher, flash }) {
   const { value: bots } = useBots(code, true);
@@ -16,6 +19,8 @@ export function Exam({ code, uid, teams, team, isTeacher, flash }) {
   const others = ids.filter((id) => id !== team?.id);
   const pool = others.length ? others : ids;
   const defaultId = pool.length ? pool[hashString(String(uid || "")) % pool.length] : null;
+  // Pin the default once it exists: a bot that arrives later must not reshuffle the pool and remount this examiner's chat.
+  useEffect(() => { if (pickedId == null && defaultId) setPickedId(defaultId); }, [pickedId, defaultId]);
   const botId = pickedId && bots?.[pickedId] ? pickedId : defaultId;
   const model = useMemo(() => (botId && bots?.[botId]?.text ? trainModel(bots[botId].text) : null), [botId, bots]);
   const board = useMemo(() => botLeaderboard(botVotes, teams, bots), [botVotes, teams, bots]);
@@ -43,7 +48,7 @@ export function Exam({ code, uid, teams, team, isTeacher, flash }) {
             </div>
             {model && (
               <>
-                <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? <> · fed on: <b>{bots[botId].sources.join(", ")}</b>. Ask it about those, then about something else.</> : "."} Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count for strangers." : ""}</p>
+                <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? <> · fed on: <b>{bots[botId].sources.map(sourceTitle).join(", ")}</b>. Ask it about those, then about something else.</> : "."} Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count for strangers." : ""}</p>
                 <BotChat key={botId} model={model} botName={`${name(botId)}'s bot`} requireVote={!isTeacher} onVote={onVote} />
               </>
             )}

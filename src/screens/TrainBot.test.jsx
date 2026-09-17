@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 let sentValue = null;   // what the mocked useTeamBot reports as the team's already-sent bot
@@ -11,6 +11,8 @@ import { TrainBot } from "./TrainBot.jsx";
 const base = { code: "ABCDE", uid: "u1", team: { id: "tA", name: "Aloo" }, isTeacher: false, flash: () => {} };
 
 describe("TrainBot", () => {
+  afterEach(() => { vi.restoreAllMocks(); sentValue = null; });   // a failed assertion must not leak the confirm spy or the sent bot into the next case
+
   it("needs 150 words before Train enables; a starter text is enough", () => {
     render(<TrainBot {...base} />);
     const train = screen.getByRole("button", { name: /Train my bot/ });
@@ -58,9 +60,7 @@ describe("TrainBot", () => {
     fireEvent.click(screen.getByRole("button", { name: /Cricket/ }));
     fireEvent.click(screen.getByRole("button", { name: /Train my bot/ }));
     fireEvent.click(screen.getByRole("button", { name: /Send my bot/ }));
-    expect(confirmSpy).toHaveBeenCalledWith(expect.stringMatching(/already sent .*biology.*Replace it\?/));
+    expect(confirmSpy).toHaveBeenCalledWith(expect.stringMatching(/already sent a bot \(The living body\)\. Replace it\?/));   // the source id "biology" is shown by its title
     expect(api.sendBot).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
-    sentValue = null;
   });
 });

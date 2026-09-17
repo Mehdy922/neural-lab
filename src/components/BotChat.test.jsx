@@ -36,14 +36,14 @@ describe("BotChat", () => {
     ask("what is 2+2");
     expect(screen.queryByText(/of 0 words/)).toBeNull();
   });
-  it("blocks the next question until the last answer is voted on, then records the vote", () => {
+  it("blocks the next question until the last answer is voted on (before asking for a topic), then records the vote", () => {
     const onVote = vi.fn();
     render(<BotChat model={model} onVote={onVote} typingMs={0} />);
     fireEvent.click(screen.getByRole("button", { name: /Science/ }));
     ask("What is a cell?");
-    fireEvent.click(screen.getByRole("button", { name: /Science/ }));
-    ask("Another?");
+    ask("Another?");                                                    // no topic picked: the forgotten vote must surface first
     expect(screen.getByText(/Vote on the last answer first/)).toBeTruthy();
+    expect(screen.queryByText(/Pick a topic/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Nonsense/ }));
     expect(onVote).toHaveBeenCalledWith(expect.objectContaining({ q: "What is a cell?", topic: "science", verdict: "nonsense" }), "nonsense");
   });
@@ -76,6 +76,7 @@ describe("BotChat", () => {
       render(<BotChat model={model} requireVote={false} requireTopic={false} typingMs={500} />);
       ask("Akbar");
       expect(screen.getByText(/is typing/)).toBeTruthy();
+      expect(screen.getByRole("status").textContent).toMatch(/is typing/);   // announced to screen readers
       await act(async () => { await vi.advanceTimersByTimeAsync(600); });
       expect(screen.queryByText(/is typing/)).toBeNull();
     } finally { vi.useRealTimers(); }

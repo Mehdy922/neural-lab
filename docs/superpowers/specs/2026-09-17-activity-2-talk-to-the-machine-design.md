@@ -61,9 +61,10 @@ activity 2. Activity 1 phases/tabs are untouched.
   over the question's content words (stopwords removed). Shown under every answer:
   *"Recognised 1 of 7 words in your question."* This is the "why it's wrong" tell.
 - **Generation**: `generate(model, question, { seed, maxWords: 40 })`:
-  1. Seed context from the question: prefer a bigram of two adjacent question words
-     that exists in the model; else the rarest known question word (most informative);
-     else a random sentence start. Record `seededFrom: "question" | "random"`.
+  1. Seed context from the question: the best adjacent pair of question words the model
+     has seen together, scored by how many are content words (a pair of two stopwords is
+     never used; ties go to the rarer pair); else the rarest known content word; else a
+     random sentence start. Record `seededFrom: "question" | "random"`.
   2. Sample next word from `tri[w1 w2]`, else `bi[w2]`, else `uni`, weighted by counts,
      with a seeded RNG (`mulberry32` from `src/ml/net.js`).
   3. Stop at the first sentence end after 8 words, or at `maxWords`; always end with a
@@ -104,13 +105,23 @@ activity 2. Activity 1 phases/tabs are untouched.
 ## 6. Scoreboard (screen `Scoreboard`, projector)
 
 - During phase `chat` the Scoreboard shows only the live feed and a running count ("{N}
-  answers judged so far"); headline, bars, the reveal question and "Nonsense of the day"
-  appear from phase `reveal` once ≥ 10 votes exist. Topics with < 3 votes show "—".
-  Questions containing denylisted words (`src/lm/projectorFilter.js`) stay off the
-  projector; the teacher can hide any feed item. The corpus renders projector-sized (three
-  columns, no scroll) with the focused question's recognised words highlighted (tap a feed
-  item to focus it). In phase `exam` each leaderboard row carries a per-topic strip over
-  strangers' votes.
+  answers judged so far"). From phase `reveal`, once ≥ 10 votes exist, it adds the headline
+  ("{N} answers were judged. It was right about {X} of history and {Y} of everything
+  else."), the per-topic bars (% right with the count asked; topics with < 3 votes show
+  "—"), the reveal question and "Nonsense of the day". Below 10 votes it reads "Waiting for
+  questions. {N} of 10 answers voted on so far."
+- The feed is the latest 8 Q&As: question, answer, topic, verdict and coverage
+  ("recognised {known} of {total} words"; "recognised none of the words" when nothing was
+  recognised; nothing when the question had no content words).
+- Questions containing denylisted words (`src/lm/projectorFilter.js`) stay off the
+  projector. The teacher can hide any feed item and the nonsense card (✕); hidden items are
+  remembered per room for the browser session (sessionStorage, no database write).
+- The corpus card ("Show me everything it has ever read") appears from phase `reveal`. For
+  the teacher it renders projector-sized (five columns, full viewport width, no scroll);
+  students keep the scroll box. Tap a feed item to focus it: its recognised words are
+  highlighted, or the caption says it recognised none of them.
+- In phase `exam` the cross-examination leaderboard appears below, with a per-topic strip
+  per bot over strangers' votes (see §8).
 
 ## 7. Part 2 · Train your bot (screen `TrainBot`, teams)
 
@@ -134,8 +145,8 @@ activity 2. Activity 1 phases/tabs are untouched.
   `n` foreign votes; sorted by foreign % desc; Nonsense counts as Wrong. Needs ≥ 3
   foreign votes per bot before a % shows.
 - Header: "Every bot is now questioned by strangers. Which one survived?"
-- The default bot is a random other team's bot (stable per student). Sources are shown
-  ("fed on: …").
+- The default bot is another team's bot, chosen per student and pinned for the session;
+  sources are shown as titles ("fed on: …").
 - One round only.
 
 ## 9. Data model additions (RTDB, under `rooms/{CODE}`)
@@ -168,7 +179,9 @@ nonsense}. Subscriptions: `votes` only while Chat/Scoreboard mounted; `bots` and
 ```
 src/lm/tokenize.js         tokenize, detokenize, STOPWORDS, contentWords
 src/lm/ngram.js            trainModel, coverage, generate, hashString
-src/lm/scoring.js          topicAccuracy(votes), botLeaderboard(botVotes, teams, bots)
+src/lm/scoring.js          topicAccuracy(votes), botLeaderboard(botVotes, teams, bots),
+                           botTopicTallies, nonsenseOfTheDay
+src/lm/projectorFilter.js  PROJECTOR_DENYLIST, isProjectorSafe
 src/lm/texts/index.js      STARTER_TEXTS (6), HISTORY_TEXT, getText(id)
 src/lm/texts/*.js          the six texts
 src/rooms/phases.js        PHASES_BY_ACTIVITY, TABS_BY_ACTIVITY, PHASE_ACTIONS_BY_ACTIVITY,
@@ -190,7 +203,13 @@ scripts/simulate.mjs       --activity 2 path: bots ask topic-tagged questions, v
 - Chat header: "HistoryBot has read one thing in its life: 2,000 words about South Asian
   history. Ask it anything."
 - Coverage line: "Recognised {known} of {total} words in your question."
+- Coverage line, nothing recognised: "It recognised none of your words. It answered anyway."
+- Chat mission card: "Find one answer it gets right, one it gets wrong, and one that is pure
+  nonsense. Then try to trick it."
+- Scoreboard headline: "{N} answers were judged. It was right about {X} of history and {Y}
+  of everything else."
 - Scoreboard question: "It never once said 'I don't know'. Why not?"
+- Scoreboard card: "Nonsense of the day"
 - Corpus button: "Show me everything it has ever read"
 - Exam header: "Every bot is now questioned by strangers. Which one survived?"
 

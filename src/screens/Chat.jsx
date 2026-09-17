@@ -26,7 +26,7 @@ export function Chat({ code, uid, isTeacher, flash }) {
         <p style={S.hint}>Pick the topic of your question, ask, then tell the class whether the answer was right. {isTeacher ? "(Teacher votes are not counted.)" : ""}</p>
         <div style={{ ...S.qBox, marginBottom: 14 }}>
           <div style={S.qKick}>Your mission</div>
-          <p style={{ ...S.q, margin: 0 }}>Your mission: find one answer it gets right, one it gets wrong, and one that is pure nonsense. Then try to trick it.</p>
+          <p style={{ ...S.q, margin: 0 }}>Find one answer it gets right, one it gets wrong, and one that is pure nonsense. Then try to trick it.</p>
         </div>
         <BotChat model={model} botName="HistoryBot" requireVote={!isTeacher} onAsk={(en) => setLastKnown(en.knownWords)} onVote={onVote} />
       </section>

@@ -4,7 +4,7 @@ export function Corpus({ text, highlight = [], compact = false }) {
   const hl = new Set(highlight.map((w) => String(w).toLowerCase()));
   const paras = String(text || "").split(/\n\s*\n/).filter((p) => p.trim());
   return (
-    <div style={{ ...S.corpus, ...(compact ? { maxHeight: "none", overflowY: "visible", columnCount: 3, columnGap: 24, fontSize: 12, lineHeight: 1.55 } : null) }}>
+    <div style={{ ...S.corpus, ...(compact ? { maxHeight: "none", overflowY: "visible", columnCount: 5, columnGap: 20, fontSize: 11, lineHeight: 1.45 } : null) }}>
       {paras.map((p, i) => (
         <p key={i} style={{ margin: i ? "10px 0 0" : 0 }}>
           {p.split(/(\s+)/).map((piece, k) => {

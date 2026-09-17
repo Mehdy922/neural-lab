@@ -32,7 +32,17 @@ export function Scoreboard({ code, teams, meta, isTeacher }) {
   const model = useMemo(() => trainModel(HISTORY_TEXT), []);
   const rows = useMemo(() => topicAccuracy(votes), [votes]);
   const split = useMemo(() => splitHistoryVsRest(votes), [votes]);
-  const [hidden, setHidden] = useState(() => new Set());
+  // Teacher-hidden vote ids, remembered for this room across tab switches (browser session only; no database write).
+  const hiddenKey = `nl.hidden.${code}`;
+  const [hidden, setHidden] = useState(() => {
+    try { const raw = JSON.parse(sessionStorage.getItem(hiddenKey) || "[]"); return new Set(Array.isArray(raw) ? raw : []); }
+    catch { return new Set(); }
+  });
+  const hide = (id) => {
+    const next = new Set([...hidden, id]);
+    setHidden(next);
+    try { sessionStorage.setItem(hiddenKey, JSON.stringify([...next])); } catch { /* storage unavailable: hidden for this mount only */ }
+  };
   // Everything the projector shows is drawn from the "safe" votes: not denylisted, not hidden by the teacher.
   const safeVotes = useMemo(() => Object.fromEntries(Object.entries(votes || {}).filter(([id, r]) => isProjectorSafe(r?.q) && !hidden.has(id))), [votes, hidden]);
   const feed = useMemo(() => recentVotes(safeVotes, 8), [safeVotes]);
@@ -78,7 +88,12 @@ export function Scoreboard({ code, teams, meta, isTeacher }) {
           {nonsense && (
             <div style={{ ...S.qBox, borderColor: C.berry }}>
               <div style={{ ...S.qKick, color: C.berry }}>Nonsense of the day</div>
-              <p style={{ ...S.q, margin: 0 }}><span aria-hidden="true">{topicEmoji(nonsense.topic)}</span> {nonsense.q}</p>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
+                <p style={{ ...S.q, margin: 0 }}><span aria-hidden="true">{topicEmoji(nonsense.topic)}</span> {nonsense.q}</p>
+                {isTeacher && (
+                  <button type="button" className="nl-btn" aria-label={`Hide ${nonsense.q}`} style={{ ...S.tiny, color: C.muted }} onClick={() => hide(nonsense.id)}>✕</button>
+                )}
+              </div>
               <p style={{ ...S.qBig, fontSize: 22 }}>{nonsense.a}</p>
               <p style={S.coverage}>It recognised {nonsense.known} of {nonsense.total} words. It answered anyway.</p>
             </div>
@@ -95,36 +110,48 @@ export function Scoreboard({ code, teams, meta, isTeacher }) {
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                 <div style={{ fontWeight: 800 }}><span aria-hidden="true">{topicEmoji(f.topic)}</span> {f.q}</div>
                 {isTeacher && (
-                  <button type="button" className="nl-btn" aria-label={`Hide ${f.q}`} style={{ ...S.tiny, color: C.muted }} onClick={(e) => { e.stopPropagation(); setHidden((h) => new Set([...h, f.id])); }}>✕</button>
+                  <button type="button" className="nl-btn" aria-label={`Hide ${f.q}`} style={{ ...S.tiny, color: C.muted }} onClick={(e) => { e.stopPropagation(); hide(f.id); }}>✕</button>
                 )}
               </div>
               <div style={{ color: C.muted }}>{f.a}</div>
-              <div style={S.coverage}>{verdictEmoji(f.verdict)} {f.verdict} · recognised {f.known} of {f.total} words</div>
+              <div style={S.coverage}>
+                {verdictEmoji(f.verdict)} {f.verdict}
+                {f.total === 0 ? null : f.known === 0 ? " · recognised none of the words" : ` · recognised ${f.known} of ${f.total} words`}
+              </div>
             </div>
           ))}
           {feed.length === 0 && <p style={S.empty}>No questions yet.</p>}
         </div>
       </div>
 
-      <div style={{ ...S.card, marginTop: 20 }}>
-        <button className="nl-btn" style={S.accent} onClick={() => setShowCorpus((v) => !v)}>
-          {showCorpus ? "Hide what it has read" : "Show me everything it has ever read"}
-        </button>
-        {showCorpus && (
-          <div style={{ marginTop: 14 }}>
-            <p style={{ ...S.hint, margin: "0 0 8px" }}>
-              This is its whole mind. {focus ? <>Highlighted: the words from “{focus.q}” it recognised.</> : null}
-            </p>
-            <Corpus text={HISTORY_TEXT} highlight={highlight} compact />
-          </div>
-        )}
-      </div>
+      {revealed && (
+        <div style={{ ...S.card, marginTop: 20 }}>
+          <button className="nl-btn" style={S.accent} onClick={() => setShowCorpus((v) => !v)}>
+            {showCorpus ? "Hide what it has read" : "Show me everything it has ever read"}
+          </button>
+          {showCorpus && (
+            <div style={{ marginTop: 14 }}>
+              <p style={{ ...S.hint, margin: "0 0 8px" }}>
+                This is its whole mind. {focus ? (highlight.length === 0 ? <>It recognised none of the words from “{focus.q}”.</> : <>Highlighted: the words from “{focus.q}” it recognised.</>) : null}
+              </p>
+              {isTeacher ? (
+                // Projector: break out of the 960 px page column so the five-column corpus fits on one screen.
+                <div style={{ marginLeft: "calc(50% - 50vw)", width: "100vw", padding: "0 24px", boxSizing: "border-box" }}>
+                  <Corpus text={HISTORY_TEXT} highlight={highlight} compact />
+                </div>
+              ) : (
+                <Corpus text={HISTORY_TEXT} highlight={highlight} />
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {examOpen && (
         <div style={{ marginTop: 28 }}>
           <h2 style={S.h2}>🎤 Cross-examination</h2>
           <p style={S.lede}>Every bot is now questioned by strangers. Which one survived?</p>
-          <p style={S.hint}>Each strip shows the bot's accuracy per topic, in the same order as above: History · Science · Sport · Maths · Everyday · Other. Every bot has one bump. Where is it?</p>
+          <p style={S.hint}>Each strip shows the bot's accuracy per topic, in this order: History · Science · Sport · Maths · Everyday · Other. Every bot has one bump. Where is it?</p>
           {board.length === 0 ? <p style={S.empty}>No bots sent yet.</p> : (
             <div style={S.table} role="table" aria-label="Bot leaderboard">
               <div style={{ ...S.tr, ...S.thead, gridTemplateColumns: "1.4fr .6fr .6fr 1fr 2fr" }} role="row"><span>Bot</span><span>Own team</span><span>Strangers</span><span>By topic</span><span /></div>
