@@ -3,6 +3,7 @@ import { CSS, S, C } from "./theme.js";
 import { isConfigured } from "./firebase.js";
 import { useAuth } from "./rooms/hooks.js";
 import { normalizeCode, isValidCode } from "./rooms/codes.js";
+import { ActivityPick } from "./screens/ActivityPick.jsx";
 import { Landing } from "./screens/Landing.jsx";
 import { TeacherCreate } from "./screens/TeacherCreate.jsx";
 import { StudentJoin } from "./screens/StudentJoin.jsx";
@@ -46,13 +47,14 @@ function Shell() {
   const { uid, error } = useAuth();
   const [code, setCode] = useState(() => codeFromUrl() || savedCode());
   const [choice, setChoice] = useState(null);
+  const [activity, setActivity] = useState(null);
 
   useEffect(() => { if (code) rememberCode(code); }, [code]);
 
   const enter = (c) => { rememberCode(c); setCode(c); };
   const exit = () => {
     try { localStorage.setItem(LS_LAST_ROOM, code || ""); } catch { /* ignore */ }
-    rememberCode(null); setCode(null); setChoice(null);
+    rememberCode(null); setCode(null); setChoice(null); setActivity(null);
   };
 
   if (error) {
@@ -65,9 +67,10 @@ function Shell() {
   }
   if (!uid) return <Centered><p style={{ ...S.lede, color: C.muted }}>Connecting…</p></Centered>;
   if (code) return <Room code={code} uid={uid} onExit={exit} />;
-  if (choice === "teacher") return <TeacherCreate uid={uid} onCreated={enter} onBack={() => setChoice(null)} />;
+  if (!activity) return <ActivityPick onPick={setActivity} rejoinCode={lastCode()} onRejoin={enter} />;
+  if (choice === "teacher") return <TeacherCreate uid={uid} activity={activity} onCreated={enter} onBack={() => setChoice(null)} />;
   if (choice === "student") return <StudentJoin uid={uid} onJoined={enter} onExit={() => setChoice(null)} />;
-  return <Landing onChoose={setChoice} rejoinCode={lastCode()} onRejoin={enter} />;
+  return <Landing activity={activity} onChoose={setChoice} onBack={() => setActivity(null)} />;
 }
 
 export default function App() {

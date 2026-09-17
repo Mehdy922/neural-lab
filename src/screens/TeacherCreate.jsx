@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { S, C } from "../theme.js";
 import { createRoom, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX } from "../rooms/api.js";
+import { ACTIVITIES } from "../rooms/phases.js";
 
-export function TeacherCreate({ uid, onCreated, onBack }) {
+export function TeacherCreate({ uid, activity = 1, onCreated, onBack }) {
+  const act = ACTIVITIES[activity] || ACTIVITIES[1];
+  const isTalk = act.id === 2;
   const [a, setA] = useState(DEFAULT_LABELS[0]);
   const [b, setB] = useState(DEFAULT_LABELS[1]);
   const [cap, setCap] = useState(DEFAULT_TEAM_CAP);
@@ -14,7 +17,7 @@ export function TeacherCreate({ uid, onCreated, onBack }) {
     e.preventDefault();
     setBusy(true); setErr("");
     try {
-      const code = await createRoom({ uid, labels: [a, b], teamCap: cap, maxTeams });
+      const code = await createRoom({ uid, labels: [a, b], teamCap: cap, maxTeams, activity: act.id });
       onCreated(code);
     } catch (ex) {
       setErr(ex?.message || "Could not create the room. Check your connection.");
@@ -27,18 +30,26 @@ export function TeacherCreate({ uid, onCreated, onBack }) {
       <form className="nl-fade" style={S.centerCard} onSubmit={submit}>
         <div style={{ fontSize: 48, lineHeight: 1 }} aria-hidden="true">👩‍🏫</div>
         <h1 style={S.h1}>Create a room</h1>
-        <p style={{ ...S.hint, margin: "0 auto" }}>
-          Pick two things that look alike. Mango and cricket ball, chappal and joota, roti and naan, sun and flower.
-          Obvious pairs are learned too easily and the tournament falls flat.
-        </p>
-        <div style={S.field}>
-          <label style={S.label} htmlFor="label-a">Students draw…</label>
-          <input id="label-a" className="nl-in" style={S.input} value={a} maxLength={24} onChange={(e) => setA(e.target.value)} />
-        </div>
-        <div style={S.field}>
-          <label style={S.label} htmlFor="label-b">…versus</label>
-          <input id="label-b" className="nl-in" style={S.input} value={b} maxLength={24} onChange={(e) => setB(e.target.value)} />
-        </div>
+        <span style={S.badge}>Activity {act.id} · {act.title}</span>
+        {!isTalk && (
+          <>
+            <p style={{ ...S.hint, margin: "0 auto" }}>
+              Pick two things that look alike. Mango and cricket ball, chappal and joota, roti and naan, sun and flower.
+              Obvious pairs are learned too easily and the tournament falls flat.
+            </p>
+            <div style={S.field}>
+              <label style={S.label} htmlFor="label-a">Students draw…</label>
+              <input id="label-a" className="nl-in" style={S.input} value={a} maxLength={24} onChange={(e) => setA(e.target.value)} />
+            </div>
+            <div style={S.field}>
+              <label style={S.label} htmlFor="label-b">…versus</label>
+              <input id="label-b" className="nl-in" style={S.input} value={b} maxLength={24} onChange={(e) => setB(e.target.value)} />
+            </div>
+          </>
+        )}
+        {isTalk && (
+          <p style={{ ...S.hint, margin: "0 auto" }}>Students will question HistoryBot, then train bots of their own. Teams of up to {cap}.</p>
+        )}
         <div style={S.field}>
           <label style={S.label} htmlFor="cap">Max students per team</label>
           <input id="cap" className="nl-in" type="number" min={1} max={12} style={S.input} value={cap} onChange={(e) => setCap(Number(e.target.value))} />
@@ -51,7 +62,7 @@ export function TeacherCreate({ uid, onCreated, onBack }) {
         {err && <p style={{ color: C.red, fontWeight: 800, marginTop: 12 }}>{err}</p>}
         <div style={{ ...S.btnRow, justifyContent: "center" }}>
           <button type="button" className="nl-btn" style={S.ghost} onClick={onBack}>Back</button>
-          <button type="submit" className="nl-btn" style={S.primary} disabled={busy || !a.trim() || !b.trim()}>
+          <button type="submit" className="nl-btn" style={S.primary} disabled={busy || (!isTalk && (!a.trim() || !b.trim()))}>
             {busy ? "Creating…" : "Create room 🎉"}
           </button>
         </div>
