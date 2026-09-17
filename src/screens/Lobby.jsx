@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { S, C } from "../theme.js";
 import { useTeamModel, useTeamBot } from "../rooms/hooks.js";
 import { createTeam, joinTeam, leaveTeam, renameTeam, deleteTeam, moveMember, DEFAULT_TEAM_CAP } from "../rooms/api.js";
-import { phaseAction } from "../rooms/phases.js";
+import { phaseAction, TABS_BY_ACTIVITY } from "../rooms/phases.js";
 import { TeamCard } from "../components/TeamCard.jsx";
 import { QrLink } from "../components/QrLink.jsx";
 
@@ -16,6 +16,9 @@ export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash,
   const locked = Boolean(myModel.value) || Boolean(myBot.value);
   const cap = meta.teamCap || DEFAULT_TEAM_CAP;
   const maxTeams = meta.maxTeams || null;
+  // No phase yet (meta still loading, or a legacy room) counts as the lobby.
+  const started = Boolean(meta?.phase) && meta.phase !== "lobby";
+  const nextTab = (TABS_BY_ACTIVITY[activity] || TABS_BY_ACTIVITY[1])[1].label;   // the student's first tab after the lobby
 
   const byTeam = useMemo(() => {
     const m = {};
@@ -51,7 +54,7 @@ export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash,
           <div style={S.codeBig}>{code}</div>
           <div style={{ margin: "14px 0" }}><QrLink url={joinUrl} /></div>
           <a style={S.link} href={joinUrl}>{joinUrl}</a>
-          <p style={S.hint}>Put this on the projector. Students scan the code or type it in. Press <b>{phaseAction("lobby", activity)}</b> above when teams are ready.</p>
+          <p style={S.hint}>Put this on the projector. Students scan the code or type it in.{!started && <> Press <b>{phaseAction("lobby", activity)}</b> above when teams are ready.</>}</p>
         </section>
       )}
 
@@ -60,7 +63,12 @@ export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash,
           <h2 style={S.h2}>{team ? "Your team" : teamsFull ? "Join a team" : "Make a team"}</h2>
           {team ? (
             <p style={S.hint}>
-              You're in <b>{team.name}</b>. {locked ? `Your team has sent its ${activity === 2 ? "bot" : "machine"}, so you're locked in.` : "Wait for your teacher to start, or switch teams below."}
+              You're in <b>{team.name}</b>.{" "}
+              {locked
+                ? `Your team has sent its ${activity === 2 ? "bot" : "machine"}, so you're locked in. Ask your teacher if you need to move.`
+                : started
+                  ? <>Your teacher has started — open <b>{nextTab}</b> above.</>
+                  : "Wait for your teacher to start, or switch teams below."}
             </p>
           ) : teamsFull ? (
             <p style={S.hint}>All {maxTeams} teams are made — join one below.</p>
