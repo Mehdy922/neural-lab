@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-vi.mock("../rooms/hooks.js", () => ({ useTeamModel: () => ({ value: null, loading: false, error: null }) }));
+vi.mock("../rooms/hooks.js", () => ({
+  useTeamModel: () => ({ value: null, loading: false, error: null }),
+  useTeamBot: () => ({ value: null, loading: false, error: null }),
+}));
 vi.mock("../rooms/api.js", () => ({
   createTeam: vi.fn(), joinTeam: vi.fn(), leaveTeam: vi.fn(), renameTeam: vi.fn(), deleteTeam: vi.fn(), moveMember: vi.fn(),
   DEFAULT_TEAM_CAP: 4,

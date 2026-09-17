@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 import { S, C } from "../theme.js";
-import { useTeamModel } from "../rooms/hooks.js";
+import { useTeamModel, useTeamBot } from "../rooms/hooks.js";
 import { createTeam, joinTeam, leaveTeam, renameTeam, deleteTeam, moveMember, DEFAULT_TEAM_CAP } from "../rooms/api.js";
 import { TeamCard } from "../components/TeamCard.jsx";
 import { QrLink } from "../components/QrLink.jsx";
 
-export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash }) {
+export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash, activity = 1 }) {
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
   const [moveUid, setMoveUid] = useState("");
   const [moveTo, setMoveTo] = useState("");
-  const myModel = useTeamModel(code, team?.id);
-  const locked = Boolean(myModel.value);
+  const myModel = useTeamModel(code, activity === 1 ? team?.id : null);
+  const myBot = useTeamBot(code, activity === 2 ? team?.id : null);
+  const locked = Boolean(myModel.value) || Boolean(myBot.value);
   const cap = meta.teamCap || DEFAULT_TEAM_CAP;
   const maxTeams = meta.maxTeams || null;
 
@@ -58,7 +59,7 @@ export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash 
           <h2 style={S.h2}>{team ? "Your team" : teamsFull ? "Join a team" : "Make a team"}</h2>
           {team ? (
             <p style={S.hint}>
-              You're in <b>{team.name}</b>. {locked ? "Your team has sent its machine, so you're locked in." : "Wait for your teacher to start, or switch teams below."}
+              You're in <b>{team.name}</b>. {locked ? `Your team has sent its ${activity === 2 ? "bot" : "machine"}, so you're locked in.` : "Wait for your teacher to start, or switch teams below."}
             </p>
           ) : teamsFull ? (
             <p style={S.hint}>All {maxTeams} teams are made — join one below.</p>

@@ -26,7 +26,7 @@ export function TeamCard({ teamId, team, members = [], cap = 4, isMine = false, 
 
       <div style={S.btnRow}>
         {isMine && (locked
-          ? <span style={S.badge}>model sent ✓</span>
+          ? <span style={S.badge}>sent ✓</span>
           : <button className="nl-btn" style={S.ghost} onClick={() => onLeave?.(teamId)}>Leave</button>)}
         {!isMine && canJoin && (
           <button className="nl-btn" style={S.accent} disabled={full} onClick={() => onJoin?.(teamId)}>

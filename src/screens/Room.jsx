@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { S } from "../theme.js";
 import { useRoom } from "../rooms/hooks.js";
-import { visibleTabs } from "../rooms/phases.js";
+import { visibleTabs, ACTIVITIES } from "../rooms/phases.js";
 import { setPhase, nextRound, DEFAULT_LABELS } from "../rooms/api.js";
 import { Tabs } from "../components/Tabs.jsx";
 import { Toast, useToast } from "../components/Toast.jsx";
@@ -12,6 +12,10 @@ import { Teach } from "./Teach.jsx";
 import { Tournament } from "./Tournament.jsx";
 import { Fence } from "./Fence.jsx";
 import { Settings } from "./Settings.jsx";
+import { Chat } from "./Chat.jsx";
+import { Scoreboard } from "./Scoreboard.jsx";
+import { TrainBot } from "./TrainBot.jsx";
+import { Exam } from "./Exam.jsx";
 
 function Centered({ children }) {
   return <div style={S.center}><div className="nl-fade" style={S.centerCard}>{children}</div></div>;
@@ -76,7 +80,8 @@ export function Room({ code, uid, onExit }) {
   if (!isTeacher && !me) return <StudentJoin uid={uid} lockedCode={code} onJoined={() => {}} onExit={onExit} />;
 
   const role = isTeacher ? "teacher" : "student";
-  const tabs = visibleTabs(role, meta.phase);
+  const activity = meta.activity === 2 ? 2 : 1;
+  const tabs = visibleTabs(role, meta.phase, activity);
   const active = tabs.some((t) => t.key === tab) ? tab : tabs[0].key;
   const team = me?.teamId && teams[me.teamId] ? { id: me.teamId, name: teams[me.teamId].name } : null;
   const labels = meta.labels?.length === 2 ? meta.labels : DEFAULT_LABELS;
@@ -101,7 +106,7 @@ export function Room({ code, uid, onExit }) {
     finally { setBusy(false); }
   };
 
-  const props = { code, uid, meta, members, teams, labels, team, isTeacher, flash, round };
+  const props = { code, uid, meta, members, teams, labels, team, isTeacher, flash, round, activity };
 
   const leave = () => {
     if (isTeacher) {
@@ -118,18 +123,19 @@ export function Room({ code, uid, onExit }) {
           <span style={{ fontSize: 30, lineHeight: 1 }} aria-hidden="true">🧠</span>
           <div>
             <div style={S.word}>Neural Lab</div>
-            <div style={S.tag}>Room <b>{code}</b> · {labels[0]} vs {labels[1]}</div>
+            <div style={S.tag}>Room <b>{code}</b> · {activity === 2 ? ACTIVITIES[2].title : `${labels[0]} vs ${labels[1]}`}</div>
           </div>
         </div>
         <Tabs tabs={tabs} active={active} onChange={setTab} />
       </header>
 
-      {isTeacher && <PhaseBar phase={meta.phase} round={round} onAdvance={advance} onNextRound={startNextRound} busy={busy} />}
+      {isTeacher && <PhaseBar phase={meta.phase} round={round} activity={activity} onAdvance={advance} onNextRound={startNextRound} busy={busy} />}
 
       <div style={S.strip}>
         <span style={S.chip}>{isTeacher ? "👩‍🏫 Teacher" : `🙋 ${me.name}`}</span>
         {team && <span style={S.chip}>Team {team.name}</span>}
-        {round > 1 && <span style={S.badge}>Round {round}</span>}
+        {round > 1 && activity === 1 && <span style={S.badge}>Round {round}</span>}
+        {activity === 2 && <span style={S.badge}>Activity 2</span>}
         <span>{teamCount}{meta.maxTeams ? `/${meta.maxTeams}` : ""} team{teamCount === 1 && !meta.maxTeams ? "" : "s"}</span>
         <button className="nl-btn" style={{ ...S.tiny, marginLeft: "auto" }} onClick={leave}>Leave room</button>
       </div>
@@ -138,6 +144,10 @@ export function Room({ code, uid, onExit }) {
       {active === "teach" && <Teach {...props} />}
       {active === "tournament" && <Tournament {...props} />}
       {active === "fence" && <Fence {...props} />}
+      {active === "chat" && <Chat {...props} />}
+      {active === "scoreboard" && <Scoreboard {...props} />}
+      {active === "trainbot" && <TrainBot {...props} />}
+      {active === "exam" && <Exam {...props} />}
       {active === "settings" && isTeacher && <Settings {...props} />}
 
       <Toast message={toast} />

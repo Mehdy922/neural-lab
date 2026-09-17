@@ -57,3 +57,15 @@ describe("Settings", () => {
     expect(screen.getByLabelText("Second thing").value).toBe("Flower");
   });
 });
+
+describe("Settings for activity 2", () => {
+  it("hides the drawing pair and resets with the activity", () => {
+    render(<Settings {...base} activity={2} meta={{ labels: ["Mango", "Cricket ball"], teamCap: 4, activity: 2 }} />);
+    expect(screen.queryByLabelText("First thing")).toBeNull();
+    expect(screen.getByLabelText("Team cap")).toBeTruthy();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: /Reset board/ }));
+    expect(api.resetBoard).toHaveBeenCalledWith({ code: "ABCDE", activity: 2 });
+    window.confirm.mockRestore();
+  });
+});

@@ -13,7 +13,19 @@ const RUN_SHEET = [
   ["0:38", "Out."],
 ];
 
-export function Settings({ code, meta, flash }) {
+const RUN_SHEET_2 = [
+  ["0:00", "Teams of four. Room code in."],
+  ["0:03", "Ask HistoryBot anything. Tag the topic, vote."],
+  ["0:12", "Reveal scoreboard. Let them read the bars."],
+  ["0:15", "Show me everything it has ever read."],
+  ["0:18", "Start training. Pick texts, paste your own, train, test, send."],
+  ["0:28", "Open cross-examination. Ask strangers' bots."],
+  ["0:36", "Leaderboard. The question: whose text was it?"],
+  ["0:40", "Out."],
+];
+
+export function Settings({ code, meta, flash, activity = 1 }) {
+  const isTalk = activity === 2;
   const [a, setA] = useState(meta.labels?.[0] || "");
   const [b, setB] = useState(meta.labels?.[1] || "");
   const [cap, setCap] = useState(meta.teamCap || 4);
@@ -38,19 +50,23 @@ export function Settings({ code, meta, flash }) {
       <h1 style={S.h1}>⚙️ Settings</h1>
       <div style={S.settingsGrid}>
         <section style={S.card}>
-          <h2 style={S.h2}>What the class draws</h2>
-          <div style={S.row}>
-            <input className="nl-in" style={{ ...S.input, width: 150 }} value={a} maxLength={24} onChange={(e) => setA(e.target.value)} aria-label="First thing" />
-            <span style={{ fontWeight: 800 }}>vs</span>
-            <input className="nl-in" style={{ ...S.input, width: 150 }} value={b} maxLength={24} onChange={(e) => setB(e.target.value)} aria-label="Second thing" />
-            <button className="nl-btn" style={S.primary} disabled={busy || !a.trim() || !b.trim()}
-              onClick={() => run(() => setLabels({ code, labels: [a, b] }), "Pair set for the whole class.")}>Set</button>
-          </div>
-          <p style={S.notesP}>
-            Pick two things that look alike. Mango and cricket ball, chappal and joota, roti and naan,
-            sun and flower. Obvious pairs are learned too easily and the tournament falls flat.
-            Change this before teams start drawing — everyone must draw the same pair.
-          </p>
+          {!isTalk && (
+            <>
+              <h2 style={S.h2}>What the class draws</h2>
+              <div style={S.row}>
+                <input className="nl-in" style={{ ...S.input, width: 150 }} value={a} maxLength={24} onChange={(e) => setA(e.target.value)} aria-label="First thing" />
+                <span style={{ fontWeight: 800 }}>vs</span>
+                <input className="nl-in" style={{ ...S.input, width: 150 }} value={b} maxLength={24} onChange={(e) => setB(e.target.value)} aria-label="Second thing" />
+                <button className="nl-btn" style={S.primary} disabled={busy || !a.trim() || !b.trim()}
+                  onClick={() => run(() => setLabels({ code, labels: [a, b] }), "Pair set for the whole class.")}>Set</button>
+              </div>
+              <p style={S.notesP}>
+                Pick two things that look alike. Mango and cricket ball, chappal and joota, roti and naan,
+                sun and flower. Obvious pairs are learned too easily and the tournament falls flat.
+                Change this before teams start drawing — everyone must draw the same pair.
+              </p>
+            </>
+          )}
 
           <h2 style={{ ...S.h2, marginTop: 18 }}>Max students per team</h2>
           <div style={S.row}>
@@ -74,7 +90,7 @@ export function Settings({ code, meta, flash }) {
 
         <section style={S.card}>
           <h2 style={S.h2}>Run sheet, one period</h2>
-          {RUN_SHEET.map(([t, w]) => (
+          {(isTalk ? RUN_SHEET_2 : RUN_SHEET).map(([t, w]) => (
             <div key={t} style={S.sheetRow}>
               <span style={{ color: C.mangoDeep, minWidth: 42, fontWeight: 800 }}>{t}</span>
               <span style={{ color: C.muted }}>{w}</span>
@@ -85,8 +101,9 @@ export function Settings({ code, meta, flash }) {
         <section style={S.card}>
           <h2 style={S.h2}>The one rule</h2>
           <p style={S.notesP}>
-            Say nothing about how it works until after the tournament collapses. The gap between own
-            and strangers is the whole lesson, and it only lands if they are surprised by it.
+            {isTalk
+              ? "Say nothing about next-word prediction or hallucination until the scoreboard is up. The bars do the teaching."
+              : "Say nothing about how it works until after the tournament collapses. The gap between own and strangers is the whole lesson, and it only lands if they are surprised by it."}
           </p>
           <p style={S.notesP}>
             Words to keep out of the room: overfitting, generalisation, bias, training data. They will
@@ -108,10 +125,14 @@ export function Settings({ code, meta, flash }) {
 
         <section style={{ ...S.card, borderLeft: `8px solid ${C.red}` }}>
           <h2 style={S.h2}>Danger zone</h2>
-          <p style={S.notesP}>Reset wipes every sent machine, every challenge and the round history, and puts the room back to round 1 in the teaching phase. Teams and members stay.</p>
+          <p style={S.notesP}>
+            {isTalk
+              ? "Reset wipes every vote and every sent bot and puts the room back to chatting. Teams and members stay."
+              : "Reset wipes every sent machine, every challenge and the round history, and puts the room back to round 1 in the teaching phase. Teams and members stay."}
+          </p>
           <div style={S.btnRow}>
             <button className="nl-btn" style={S.danger} disabled={busy}
-              onClick={() => window.confirm("Erase every model and challenge from the class board?") && run(() => resetBoard({ code }), "Class board cleared.")}>
+              onClick={() => window.confirm("Erase every model and challenge from the class board?") && run(() => resetBoard({ code, activity }), "Class board cleared.")}>
               Reset board
             </button>
             <button className="nl-btn" style={S.danger} disabled={busy || meta.closed}
