@@ -68,4 +68,9 @@ describe("Settings for activity 2", () => {
     expect(api.resetBoard).toHaveBeenCalledWith({ code: "ABCDE", activity: 2 });
     window.confirm.mockRestore();
   });
+  it("shows the activity-2 notes and hides the activity-1-only ones", () => {
+    render(<Settings {...base} activity={2} meta={{ labels: ["Mango", "Cricket ball"], teamCap: 4, activity: 2 }} />);
+    expect(screen.getByRole("heading", { name: "The reveal" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Bendy fence/ })).toBeNull();
+  });
 });

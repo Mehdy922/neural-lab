@@ -105,22 +105,38 @@ export function Settings({ code, meta, flash, activity = 1 }) {
               ? "Say nothing about next-word prediction or hallucination until the scoreboard is up. The bars do the teaching."
               : "Say nothing about how it works until after the tournament collapses. The gap between own and strangers is the whole lesson, and it only lands if they are surprised by it."}
           </p>
-          <p style={S.notesP}>
-            Words to keep out of the room: overfitting, generalisation, bias, training data. They will
-            describe all four in their own words. That is better than the terms.
-          </p>
-          <h2 style={{ ...S.h2, marginTop: 18 }}>Round 2, if the class is hooked</h2>
-          <p style={S.notesP}>
-            After the reveal, press <b>Next round</b> instead of moving on. Teams keep their drawings, add more
-            in styles other teams might use, retrain and send again. The next reveal shows each team's change.
-            Ask before they draw: what would you need to show the machine so it stops caring who drew it?
-          </p>
-          <h2 style={{ ...S.h2, marginTop: 18 }}>Bendy fence, if you get a second period</h2>
-          <p style={S.notesP}>
-            One neuron draws a straight fence. Ask teams to make a pattern no straight fence can split,
-            post it, then race to solve each other's with the fewest neurons. Four dots in a checkerboard
-            is the classic. It needs at least two neurons.
-          </p>
+          {isTalk ? (
+            <>
+              <p style={S.notesP}>
+                Don't say "it doesn't know" or "it's only trained on history" until the scoreboard is up.
+                Let the students find it. Say: "Ask it something. Was it right? Vote."
+              </p>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>The reveal</h2>
+              <p style={S.notesP}>
+                Tap "Show me everything it has ever read" on the projector. Then ask the class: it never
+                once said "I don't know". Why not?
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={S.notesP}>
+                Words to keep out of the room: overfitting, generalisation, bias, training data. They will
+                describe all four in their own words. That is better than the terms.
+              </p>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>Round 2, if the class is hooked</h2>
+              <p style={S.notesP}>
+                After the reveal, press <b>Next round</b> instead of moving on. Teams keep their drawings, add more
+                in styles other teams might use, retrain and send again. The next reveal shows each team's change.
+                Ask before they draw: what would you need to show the machine so it stops caring who drew it?
+              </p>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>Bendy fence, if you get a second period</h2>
+              <p style={S.notesP}>
+                One neuron draws a straight fence. Ask teams to make a pattern no straight fence can split,
+                post it, then race to solve each other's with the fewest neurons. Four dots in a checkerboard
+                is the classic. It needs at least two neurons.
+              </p>
+            </>
+          )}
         </section>
 
         <section style={{ ...S.card, borderLeft: `8px solid ${C.red}` }}>
@@ -132,7 +148,7 @@ export function Settings({ code, meta, flash, activity = 1 }) {
           </p>
           <div style={S.btnRow}>
             <button className="nl-btn" style={S.danger} disabled={busy}
-              onClick={() => window.confirm("Erase every model and challenge from the class board?") && run(() => resetBoard({ code, activity }), "Class board cleared.")}>
+              onClick={() => window.confirm(isTalk ? "Wipe every question, vote and team bot and go back to chatting? Teams stay." : "Erase every model and challenge from the class board?") && run(() => resetBoard({ code, activity }), "Class board cleared.")}>
               Reset board
             </button>
             <button className="nl-btn" style={S.danger} disabled={busy || meta.closed}
