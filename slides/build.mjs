@@ -13,7 +13,8 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
 // 1 · Title
 {
   const s = slide("Welcome. Today in one line: how does a machine learn anything? In 30 minutes you will know, and then you will build one yourself on your phone. Keep the energy up — the payoff is the activity.");
-  badge(s, "GRADES 9–12 · 30–40 MIN", M, 0.5, C.sun, C.ink, 2.4);
+  badge(s, "LESSON 1 · TEACH THE MACHINE", M, 0.5, C.sun, C.ink, 2.9);
+  badge(s, "GRADES 9–12 · 30–40 MIN", M + 3.05, 0.5, C.paper, C.muted, 2.4);
   s.addText("How does a machine learn?", { x: M, y: 1.0, w: 6.2, h: 1.6, fontFace: DISP, fontSize: 48, bold: true, color: C.ink, valign: "middle" });
   s.addText("Teach a machine to see. Then find out what it really learned.", { x: M, y: 2.65, w: 6, h: 0.8, fontFace: SANS, fontSize: 18, color: C.muted });
   badge(s, "PART 1 · THE LESSON", M, 3.7, C.mango, C.paper, 2.2);
@@ -24,7 +25,22 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   pixelArt(s, art(0, 5, 14), 8.4, 2.6, 1.3, C.mangoDeep);
 }
 
-// 2 · Hook
+// 2 · What is this? (apple)
+{
+  const s = slide("1 min. Say nothing else. Wait for the shout: apple. Then: how did you know? You have never seen this exact drawing. Hold the answer — the next slide makes it bigger.");
+  title(s, "What is this?");
+  // A big apple drawn with shapes: two overlapping red ellipses make the body and its dent,
+  // a brown stem sits in the dent, a green leaf leans off the stem.
+  const BROWN = "7A4B22";
+  const cx = W / 2, top = 1.6, h = 3.0, a = 2.2, d = 0.58;
+  s.addShape(pptx.ShapeType.roundRect, { x: cx - 0.08, y: top - 0.32, w: 0.16, h: 0.66, fill: { color: BROWN }, line: { color: BROWN, width: 0 }, rectRadius: 0.08, rotate: -6 });
+  s.addShape(pptx.ShapeType.ellipse, { x: cx - d - a / 2, y: top, w: a, h, fill: { color: C.red }, line: { color: C.red, width: 0 } });
+  s.addShape(pptx.ShapeType.ellipse, { x: cx + d - a / 2, y: top, w: a, h, fill: { color: C.red }, line: { color: C.red, width: 0 } });
+  s.addShape(pptx.ShapeType.ellipse, { x: cx - a / 2 - 0.05, y: top + 0.45, w: 0.5, h: 0.95, fill: { color: C.paper, transparency: 60 }, line: { color: C.paper, width: 0, transparency: 100 }, rotate: 18 });
+  s.addShape(pptx.ShapeType.ellipse, { x: cx + 0.08, y: top - 0.22, w: 1.05, h: 0.44, fill: { color: C.leaf }, line: { color: C.leaf, width: 0 }, rotate: -30 });
+}
+
+// 3 · Hook
 {
   const s = slide("3 min. Ask: which one is the mango? Wait. All four are mangoes, drawn by four different people. Ask: how did you know so fast? Nobody gave you a rule. Collect two or three answers, then move on — the point lands on the next slide.");
   title(s, "Which one is the mango?");
@@ -38,7 +54,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   s.addText("All of them. You knew instantly. How?", { x: M, y: 4.2, w: W - 2 * M, h: 0.6, fontFace: DISP, fontSize: 24, bold: true, color: C.ink, align: "center" });
 }
 
-// 3 · Learning from examples
+// 4 · Learning from examples
 {
   const s = slide("3 min. Nobody handed you a rulebook for 'mango'. You saw hundreds: in the bazaar, on trees, cut on a plate, badly drawn by a cousin. Each one nudged your idea of 'mango' a little. That is learning from examples. Hold this phrase; it is the whole lesson.");
   title(s, "Nobody handed you a rulebook.");
@@ -49,7 +65,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   sub(s, "Machines can do this too. That is what “AI” mostly means today.", 4.55, { align: "center" });
 }
 
-// 4 · Rules break
+// 5 · Rules break
 {
   const s = slide("4 min, interactive. Ask students to shout rules for 'is this a mango?'. Write two or three on the board. Then ask for something that breaks each rule. Green mangoes exist. Oranges are round and orange. Drawings have no smell. Every rule breaks somewhere; examples bend instead. This is why nobody programs face unlock with rules.");
   title(s, "Try writing the rules.");
@@ -63,7 +79,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   badge(s, "RULES BREAK. EXAMPLES BEND.", 3.2, 4.7, C.berry, C.paper, 3.6);
 }
 
-// 5 · How a computer sees
+// 6 · How a computer sees
 {
   const s = slide("4 min. This is the only technical slide that matters. A drawing is squashed to a 16 by 16 grid: 256 little squares. Each square becomes a number from 0 (white) to 1 (black). The machine never sees a mango. It sees 256 numbers. Ask: could you tell a mango from a cricket ball if someone read you 256 numbers? No. Yet the machine will.");
   title(s, "How a computer sees your drawing.");
@@ -79,7 +95,38 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   sub(s, "Your drawing is also moved to the middle and scaled, so drawing in a corner doesn't matter.", 4.72, { fontSize: 12.5 });
 }
 
-// 6 · Inside the machine
+// 7 · Where the idea came from
+{
+  const s = slide("3 min. This is why it is called a neural network: it borrows the shape of a brain cell, not the brain. One neuron does almost nothing. Millions wired together learn. Keep it to the shape; don't do biology.");
+  title(s, "Where the idea came from.");
+  const seg = (x1, y1, x2, y2, width = 1.75) =>
+    s.addShape(pptx.ShapeType.line, { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1) || 0.001, h: Math.abs(y2 - y1) || 0.001, line: { color: C.ink, width }, flipV: (x2 - x1) * (y2 - y1) < 0 });
+  const dot = (x, y, d, fill, ln) => s.addShape(pptx.ShapeType.ellipse, { x: x - d / 2, y: y - d / 2, w: d, h: d, fill: { color: fill }, line: { color: ln, width: 1.5 } });
+  const label = (text, x, w) => body(s, text, x, 3.42, w, 0.35, { fontSize: 11, bold: true, color: C.muted, align: "center" });
+  const mid = 2.45;
+  // Left: a brain cell. Signals come in along the dendrites; the cell body sends one out along the axon.
+  card(s, M, 1.35, 4.3, 2.55);
+  [1.65, 2.05, 2.45, 2.85, 3.25].forEach((y) => seg(0.85, y, 2.05, mid));
+  seg(2.05, mid, 3.75, mid, 2.25);
+  [[4.3, 2.0], [4.4, mid], [4.3, 2.9]].forEach(([x, y]) => { seg(3.75, mid, x, y); dot(x, y, 0.2, C.mango, C.mangoDeep); });
+  s.addShape(pptx.ShapeType.ellipse, { x: 2.05 - 0.5, y: mid - 0.4, w: 1.0, h: 0.8, fill: { color: C.sky }, line: { color: C.skyDeep, width: 2 } });
+  label("signals in", 0.55, 1.2);
+  label("cell body", 1.45, 1.2);
+  label("signal out", 3.6, 1.2);
+  // Right: the maths copy. Three numbers in, one weighted sum, one number out.
+  card(s, 5.2, 1.35, 4.3, 2.55, C.soft);
+  [1.85, mid, 3.05].forEach((y) => seg(5.85, y, 7.35, mid));
+  seg(7.35, mid, 8.85, mid);
+  [1.85, mid, 3.05].forEach((y) => dot(5.85, y, 0.34, C.ink, C.ink));
+  dot(7.35, mid, 0.62, C.sky, C.skyDeep);
+  dot(8.85, mid, 0.46, C.mango, C.mangoDeep);
+  label("numbers in", 5.25, 1.2);
+  label("add them up, weighted", 6.3, 2.1);
+  label("a number out", 8.25, 1.25);
+  sub(s, "Your brain has about 86 billion of these. Each one takes many signals in and sends one out. In 1943 two scientists copied that idea as maths. That copy is what we build today.", 4.05, { align: "center", fontSize: 14, h: 0.9 });
+}
+
+// 8 · Inside the machine
 {
   const s = slide("5 min. Cartoon version of a neural network, and it is honestly what runs on their phones later. Left: 256 inputs, one per pixel. Middle: 10 neurons. Call them detectives: each one learns to look for some pattern (a curve here, a straight line there). Right: one output, mango or cricket ball. Every line between them has a knob, a weight. There are about 2,600 knobs. At the start every knob is set randomly, so the machine guesses like a coin toss.");
   title(s, "Inside the machine.");
@@ -106,7 +153,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   body(s, "Every line has a knob (a “weight”). About 2,600 knobs in total.\nAt the start they are all random. The machine guesses like a coin toss.", 5.8, 1.4, 3.6, 1.05, { fontSize: 13 });
 }
 
-// 7 · Training
+// 9 · Training
 {
   const s = slide("4 min. Training is a loop. Show it one drawing. It guesses. Compare the guess with the label you gave. Nudge every knob a tiny bit in the direction that would have made the guess less wrong. Next drawing. Ten drawings, 240 laps, about one second on a phone. Don't use the word gradient. If someone asks how it knows which way to nudge: it tries the tiniest change and keeps the direction that helped.");
   title(s, "Training = guess, check, nudge.");
@@ -123,7 +170,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   badge(s, "240 LAPS OVER 10 DRAWINGS · ABOUT 1 SECOND ON A PHONE", 2.2, 4.55, C.leaf, C.paper, 5.6);
 }
 
-// 8 · Confidence
+// 10 · Confidence
 {
   const s = slide("2 min. The output is never yes or no. It is a number between 0 and 1, which we show as a percentage. 0.78 means 'leaning cricket ball'. 0.51 means 'no idea'. Keep this in mind for later: a confident machine can still be confidently wrong.");
   title(s, "The answer is a confidence.");
@@ -138,21 +185,26 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   sub(s, "Never certain. A machine can be very sure and still wrong. Remember that.", 4.5, { align: "center" });
 }
 
-// 9 · What it looks like (screenshots)
+// 11 · What it looks like (screenshots)
 {
   const s = slide("5 min. This is the app you will use in a few minutes. Left: a team drawing mangoes and cricket balls; each drawing added becomes one example in the training set at the bottom. Right: after Train, the score on their own drawings and a test with a fresh drawing. Walk through the buttons: Add this drawing, Train it, What is it?, Send my machine to the class.");
   title(s, "What it looks like.");
-  img(s, "teach-drawing.png", M, 1.3, 2.2, 3.5);
-  img(s, "teach-guess.png", 2.85, 1.3, 2.2, 3.5);
-  img(s, "teach-trained.png", 5.2, 1.3, 2.2, 3.5);
-  card(s, 7.6, 1.3, 1.9, 3.5, C.soft);
-  bullets(s, ["Draw big, in the middle.", "Add this drawing.", "5 of each. Train it.", "Fresh one. What is it?", "Send to the class."], 7.7, 1.45, 1.75, 3.3, { fontSize: 11.5 });
-  body(s, "1 · draw and add", M, 4.85, 2.2, 0.3, { fontSize: 11, color: C.muted, align: "center" });
-  body(s, "2 · test it yourself", 2.85, 4.85, 2.2, 0.3, { fontSize: 11, color: C.muted, align: "center" });
-  body(s, "3 · your training set + score", 5.2, 4.85, 2.2, 0.3, { fontSize: 11, color: C.muted, align: "center" });
+  // Three shots of the same phone at one height; each width follows its PNG's own aspect ratio
+  // (716 px wide by 1010 / 1246 / 1032 px tall) so nothing is stretched and the row sits level.
+  const y = 1.3, h = 3.3;
+  const shots = [["teach-drawing.png", 716 / 1010, "1 · draw and add"], ["teach-guess.png", 716 / 1246, "2 · test it yourself"], ["teach-trained.png", 716 / 1032, "3 · your examples + score"]];
+  let x = M;
+  for (const [file, ratio, caption] of shots) {
+    const w = h * ratio;
+    img(s, file, x, y, w, h);
+    body(s, caption, x - 0.1, y + h + 0.1, w + 0.2, 0.3, { fontSize: 11, color: C.muted, align: "center" });
+    x += w + 0.2;
+  }
+  card(s, 7.6, 1.3, 1.9, 3.3, C.soft);
+  bullets(s, ["Draw big, in the middle.", "Add this drawing.", "5 of each. Train it.", "Fresh one. What is it?", "Send to the class."], 7.7, 1.45, 1.75, 3.1, { fontSize: 11.5 });
 }
 
-// 10 · In your pocket
+// 12 · In your pocket
 {
   const s = slide("3 min. Every one of these learned from examples, not rules. Face unlock saw thousands of photos of your face. The spam filter saw millions of emails people marked as spam. Autocorrect saw what people typed and fixed. Recommendations watch what you skip. Fraud alerts learned what normal spending looks like for you. Ask: which of these has ever been wrong for you? All of them have.");
   title(s, "It's already in your pocket.");
@@ -167,7 +219,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   badge(s, "ALL LEARNED FROM EXAMPLES. NONE FROM RULES.", 2.6, 4.4, C.sun, C.ink, 4.8);
 }
 
-// 11 · Hands up
+// 13 · Hands up
 {
   const s = slide("2 min, quick poll. Read each one; hands up if it learned from examples. Calculator: no, pure rules. Face unlock: yes. Alarm clock: no. Spam filter: yes. Maps arrival time: yes, it learned from millions of past trips. The point: 'computer' does not mean 'learned'. Most software is still rules. Learning is the new part.");
   title(s, "Hands up: which of these learned?");
@@ -182,7 +234,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   body(s, "For you: calculator no · face unlock yes · alarm clock no · spam filter yes · maps yes.\n“Computer” doesn't mean “learned”. Most software is still rules. Learning is the new part.", M + 0.25, 3.92, 8.5, 0.8, { fontSize: 12.5 });
 }
 
-// 12 · Teaser
+// 14 · Teaser
 {
   const s = slide("1 min. Build suspense and say nothing more. Whatever you do, do not explain what is coming. The activity only works if the drop surprises them.");
   s.addText("Your machine is going to score 100%.", { x: M, y: 1.4, w: W - 2 * M, h: 1.2, fontFace: DISP, fontSize: 40, bold: true, color: C.ink, align: "center", valign: "middle" });
@@ -190,7 +242,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   sub(s, "No spoilers.", 3.8, { align: "center", fontSize: 16 });
 }
 
-// 13 · The activity
+// 15 · The activity
 {
   const s = slide("3 min. Briefing. Teams of up to four; every member draws at least one of each. Join with the room code or QR on the projector. Draw five mangoes and five cricket balls, big and in the middle. Train. Test with a fresh drawing. Only send when the whole team agrees the machine is good. Twenty minutes for all of it.");
   title(s, "The activity.");
@@ -206,15 +258,23 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   badge(s, "20 MINUTES · DON'T PEEK AT THE PROJECTOR UNTIL YOU'RE TOLD", 1.9, 4.5, C.berry, C.paper, 6.2);
 }
 
-// 14 · Join
+// 16 · Join
 {
-  const s = slide("Switch the projector to the app now: Teacher → your room → Lobby shows the code and QR live. Leave this slide up only if the projector can't switch. Press Start teaching once teams are formed.");
+  const s = slide("Switch the projector to the app now: Rejoin room CODE, or choose Activity 1 · Teach the machine → Teacher. The Lobby shows the code and QR live. Leave this slide up only if the projector can't switch. Press Start teaching once teams are formed.");
   title(s, "Join now.");
-  card(s, 2.0, 1.5, 6.0, 2.6);
-  s.addText("mehdy922.github.io/neural-lab", { x: 2.0, y: 1.7, w: 6.0, h: 0.6, fontFace: SANS, fontSize: 20, bold: true, color: C.skyDeep, align: "center" });
-  s.addText("ROOM CODE", { x: 2.0, y: 2.35, w: 6.0, h: 0.4, fontFace: SANS, fontSize: 12, bold: true, color: C.muted, align: "center" });
-  s.addText("— on the projector —", { x: 2.0, y: 2.75, w: 6.0, h: 1.0, fontFace: DISP, fontSize: 36, bold: true, color: C.ink, align: "center", valign: "middle" });
-  sub(s, "Student → type the code → your name → make or join a team.", 4.35, { align: "center" });
+  const cw = 6.9;
+  card(s, M, 1.4, cw, 2.45);
+  s.addText("mehdy922.github.io/neural-lab", { x: M, y: 1.58, w: cw, h: 0.6, fontFace: SANS, fontSize: 20, bold: true, color: C.skyDeep, align: "center" });
+  s.addText("ROOM CODE", { x: M, y: 2.2, w: cw, h: 0.4, fontFace: SANS, fontSize: 12, bold: true, color: C.muted, align: "center" });
+  s.addText("— on the projector —", { x: M, y: 2.6, w: cw, h: 1.0, fontFace: DISP, fontSize: 36, bold: true, color: C.ink, align: "center", valign: "middle" });
+  sub(s, [
+    { text: "Scan the QR, or open the link → " },
+    { text: "Activity 1 · Teach the machine", options: { bold: true } },
+    { text: " → " },
+    { text: "Student", options: { bold: true } },
+    { text: " → code → your name → make or join a team." },
+  ], 4.0, { w: cw, h: 0.9, align: "center", fontSize: 14 });
+  img(s, "lobby.png", 7.84, 1.4, 1.66, 3.6);   // 780×1688 px
 }
 
 // ── Appendix: after the tournament ───────────────────────────────────────
@@ -229,14 +289,15 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
 // A1 · What just happened
 {
   const s = slide("Let them tell you first. They will say 'it learned our handwriting', 'it only knows how we draw'. Now, and only now, give the words. Overfitting: it memorised the quirks of the few examples it saw. Generalisation: working on examples it never saw, which is the only thing that actually matters. Point at the projector screenshot: same machines, different pencils.");
-  title(s, "What just happened?");
-  img(s, "tournament-projector-r1.png", M, 1.35, 5.2, 3.1);
-  card(s, 6.0, 1.35, 3.5, 1.45, C.soft);
-  s.addText("Overfitting", { x: 6.2, y: 1.42, w: 3.1, h: 0.45, fontFace: DISP, fontSize: 20, bold: true, color: C.red });
-  body(s, "It memorised the quirks of your ten drawings, not the idea of a mango.", 6.2, 1.85, 3.1, 0.9, { fontSize: 13 });
-  card(s, 6.0, 2.95, 3.5, 1.5, C.soft);
-  s.addText("Generalisation", { x: 6.2, y: 3.02, w: 3.1, h: 0.45, fontFace: DISP, fontSize: 20, bold: true, color: C.leaf });
-  body(s, "Working on examples it has never seen. The only score that matters.", 6.2, 3.45, 3.1, 0.9, { fontSize: 13 });
+  title(s, "What just happened?", { h: 0.8 });
+  badge(s, "A MACHINE ONLY KNOWS WHAT IT WAS SHOWN", M, 1.12, C.sun, C.ink, 5.5);
+  img(s, "tournament-projector-r1.png", M, 1.62, 4.64, 2.9);   // 2560×1600 px
+  card(s, 6.0, 1.62, 3.5, 1.35, C.soft);
+  s.addText("Overfitting", { x: 6.2, y: 1.67, w: 3.1, h: 0.42, fontFace: DISP, fontSize: 20, bold: true, color: C.red });
+  body(s, "It memorised the quirks of your ten drawings, not the idea of a mango.", 6.2, 2.07, 3.1, 0.9, { fontSize: 13 });
+  card(s, 6.0, 3.12, 3.5, 1.4, C.soft);
+  s.addText("Generalisation", { x: 6.2, y: 3.17, w: 3.1, h: 0.42, fontFace: DISP, fontSize: 20, bold: true, color: C.leaf });
+  body(s, "Working on examples it has never seen. The only score that matters.", 6.2, 3.57, 3.1, 0.9, { fontSize: 13 });
   badge(s, "SAME MACHINES. DIFFERENT PENCILS.", 3.0, 4.7, C.sun, C.ink, 4.0);
 }
 
