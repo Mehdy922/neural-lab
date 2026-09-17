@@ -27,3 +27,14 @@ describe("PhaseBar", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });
+
+describe("PhaseBar activity 2", () => {
+  it("uses activity 2 labels and never offers Next round", () => {
+    const onAdvance = vi.fn();
+    render(<PhaseBar phase="reveal" round={1} activity={2} onAdvance={onAdvance} onNextRound={() => {}} />);
+    expect(screen.queryByRole("button", { name: /Next round/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Start training/ }));
+    expect(onAdvance).toHaveBeenCalledWith("train");
+    expect(screen.queryByText(/Round/)).toBeNull();
+  });
+});
