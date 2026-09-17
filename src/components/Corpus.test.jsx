@@ -9,4 +9,10 @@ describe("Corpus", () => {
     expect(marks.map((m) => m.textContent)).toEqual(["Agra", "Babur"]);
     expect(screen.getByText(/ruled from/)).toBeTruthy();
   });
+  it("compact mode drops the scroll box and uses columns for the projector", () => {
+    const { container } = render(<Corpus text={"One two.\n\nThree four."} compact />);
+    const box = container.firstChild;
+    expect(box.style.maxHeight).toBe("none");
+    expect(box.style.columnCount).toBe("3");
+  });
 });

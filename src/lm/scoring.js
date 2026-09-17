@@ -17,7 +17,7 @@ export const MIN_VOTES_TO_SHOW = 10;
 export const MIN_FOREIGN_VOTES = 3;
 
 const valid = (r) => r && TOPIC_IDS.includes(r.topic) && VERDICT_IDS.includes(r.verdict);
-const list = (map) => Object.values(map || {}).filter(valid);
+const list = (map) => Object.entries(map || {}).map(([id, r]) => (r && typeof r === "object" ? { id, ...r } : r)).filter(valid);
 const tally = (rs) => {
   const n = rs.length, right = rs.filter((r) => r.verdict === "right").length;
   return { n, right, pct: n ? right / n : null };
@@ -51,4 +51,16 @@ export function botLeaderboard(botVotes, teams, bots) {
 
 export function recentVotes(votes, n = 8) {
   return list(votes).sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, n);
+}
+
+export function botTopicTallies(botVotes, teamId) {
+  const rs = list(botVotes).filter((r) => r.botTeamId === teamId && r.askerTeamId !== teamId);
+  return TOPICS.map((t) => ({ topic: t.id, label: t.label, emoji: t.emoji, ...tally(rs.filter((r) => r.topic === t.id)) }));
+}
+
+export function nonsenseOfTheDay(votes) {
+  const rs = list(votes).filter((r) => r.verdict === "nonsense" && Number(r.total) > 0);
+  if (!rs.length) return null;
+  const ratio = (r) => Number(r.known || 0) / Number(r.total);
+  return rs.sort((a, b) => ratio(a) - ratio(b) || (b.at || 0) - (a.at || 0))[0];
 }
