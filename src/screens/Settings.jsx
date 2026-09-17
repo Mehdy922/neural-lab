@@ -5,7 +5,7 @@ import { setLabels, setTeamCap, setMaxTeams, resetBoard, closeRoom, MAX_TEAMS_MI
 const OUT = "Out. Settings → Close room, so nobody rejoins it next lesson.";
 
 // One period, minute by minute. Team size comes from the room so the sheet matches what the teacher set.
-export const runSheet = (activity, teamCap) => (activity === 2
+const runSheet = (activity, teamCap) => (activity === 2
   ? [
     ["0:00", `Teams of ${teamCap}. Room code in. Projector: Lobby.`],
     ["0:03", "Start chatting. Projector: Scoreboard (only the feed shows). Say nothing about how it works."],
