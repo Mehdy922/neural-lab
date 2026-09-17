@@ -16,6 +16,7 @@ import { Lobby } from "./Lobby.jsx";
 const teams = { t1: { name: "Aloo", createdAt: 1 }, t2: { name: "Bhindi", createdAt: 2 } };
 const members = { u1: { name: "Sana", teamId: "t1" }, u2: { name: "Bilal", teamId: "t2" }, me: { name: "Zara" } };
 const base = { code: "ABCDE", uid: "me", members, teams, team: null, isTeacher: false, flash: () => {} };
+const teacherProps = { ...base, isTeacher: true, meta: { teamCap: 4 } };
 
 describe("Lobby team limit (student view)", () => {
   it("lets students create a team while under the limit", () => {
@@ -33,5 +34,12 @@ describe("Lobby team limit (student view)", () => {
     render(<Lobby {...base} meta={{ teamCap: 4 }} />);
     expect(screen.getByLabelText("New team name")).toBeTruthy();
     expect(screen.queryByText(/teams are made/)).toBeNull();
+  });
+});
+
+describe("Lobby teacher hint", () => {
+  it("tells the activity-2 teacher to press Start chatting", () => {
+    render(<Lobby {...teacherProps} activity={2} />);
+    expect(screen.getByText(/Press/).textContent).toMatch(/Start chatting/);
   });
 });

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { S, C } from "../theme.js";
 import { useTeamModel, useTeamBot } from "../rooms/hooks.js";
 import { createTeam, joinTeam, leaveTeam, renameTeam, deleteTeam, moveMember, DEFAULT_TEAM_CAP } from "../rooms/api.js";
+import { phaseAction } from "../rooms/phases.js";
 import { TeamCard } from "../components/TeamCard.jsx";
 import { QrLink } from "../components/QrLink.jsx";
 
@@ -50,7 +51,7 @@ export function Lobby({ code, uid, meta, members, teams, team, isTeacher, flash,
           <div style={S.codeBig}>{code}</div>
           <div style={{ margin: "14px 0" }}><QrLink url={joinUrl} /></div>
           <a style={S.link} href={joinUrl}>{joinUrl}</a>
-          <p style={S.hint}>Put this on the projector. Students scan the code or type it in. Press <b>Start teaching</b> above when teams are ready.</p>
+          <p style={S.hint}>Put this on the projector. Students scan the code or type it in. Press <b>{phaseAction("lobby", activity)}</b> above when teams are ready.</p>
         </section>
       )}
 

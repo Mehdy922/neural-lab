@@ -60,6 +60,8 @@ Teacher tips, run sheet and the one rule are in the **Settings** tab inside the 
    They'll see: *"Every bot is now questioned by strangers. Which one survived?"* The leaderboard ranks bots
    by how well they do on questions from OUTSIDE their own team.
 
+The Settings tab carries a run sheet and a read-aloud teacher script for every phase.
+
 `npm run simulate -- --activity 2` runs this whole flow against bots for a dry run — see **Bot simulator** below.
 
 Because this activity adds `votes`, `bots` and `botVotes` to `database.rules.json`, any already-deployed

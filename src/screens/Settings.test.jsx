@@ -73,4 +73,10 @@ describe("Settings for activity 2", () => {
     expect(screen.getByRole("heading", { name: "The reveal" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Bendy fence/ })).toBeNull();
   });
+  it("activity-2 notes carry the religion warning and the teacher script", () => {
+    render(<Settings {...base} activity={2} meta={{ labels: ["Mango", "Cricket ball"], teamCap: 4, activity: 2 }} />);
+    expect(screen.getByText(/Students will ask it about religion/)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Say this" })).toBeTruthy();
+    expect(screen.getByText(/Where is the bump/)).toBeTruthy();   // unique to the script ("one bump" also appears in the run sheet)
+  });
 });

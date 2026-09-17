@@ -5,6 +5,7 @@ import { trainModel } from "../lm/ngram.js";
 import { botLeaderboard } from "../lm/scoring.js";
 import { castBotVote } from "../rooms/api.js";
 import { pct } from "../ml/net.js";
+import { hashString } from "../lm/tokenize.js";
 import { BotChat } from "../components/BotChat.jsx";
 
 export function Exam({ code, uid, teams, team, isTeacher, flash }) {
@@ -12,7 +13,10 @@ export function Exam({ code, uid, teams, team, isTeacher, flash }) {
   const { value: botVotes } = useBotVotes(code, true);
   const ids = Object.keys(bots || {});
   const [pickedId, setPickedId] = useState(null);
-  const botId = pickedId && bots?.[pickedId] ? pickedId : ids[0] || null;
+  const others = ids.filter((id) => id !== team?.id);
+  const pool = others.length ? others : ids;
+  const defaultId = pool.length ? pool[hashString(String(uid || "")) % pool.length] : null;
+  const botId = pickedId && bots?.[pickedId] ? pickedId : defaultId;
   const model = useMemo(() => (botId && bots?.[botId]?.text ? trainModel(bots[botId].text) : null), [botId, bots]);
   const board = useMemo(() => botLeaderboard(botVotes, teams, bots), [botVotes, teams, bots]);
   const name = (id) => teams?.[id]?.name || "Unknown team";
@@ -39,7 +43,7 @@ export function Exam({ code, uid, teams, team, isTeacher, flash }) {
             </div>
             {model && (
               <>
-                <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? ` · fed on: ${bots[botId].sources.join(", ")}` : ""}. Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count for strangers." : ""}</p>
+                <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? <> · fed on: <b>{bots[botId].sources.join(", ")}</b>. Ask it about those, then about something else.</> : "."} Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count for strangers." : ""}</p>
                 <BotChat key={botId} model={model} botName={`${name(botId)}'s bot`} requireVote={!isTeacher} onVote={onVote} />
               </>
             )}

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-vi.mock("../rooms/hooks.js", () => ({ useTeamBot: () => ({ value: null, loading: false }) }));
+let sentValue = null;   // what the mocked useTeamBot reports as the team's already-sent bot
+vi.mock("../rooms/hooks.js", () => ({ useTeamBot: () => ({ value: sentValue, loading: false }) }));
 const api = { sendBot: vi.fn(() => Promise.resolve()) };
 vi.mock("../rooms/api.js", () => ({ sendBot: (...a) => api.sendBot(...a), MAX_BOT_TEXT: 50000, MAX_OWN_TEXT: 6000, MIN_BOT_WORDS: 150 }));
 
@@ -47,5 +48,19 @@ describe("TrainBot", () => {
     fireEvent.click(sendBtn);
     await Promise.resolve();
     expect(api.sendBot).toHaveBeenCalledWith(expect.objectContaining({ code: "ABCDE", teamId: "tA", uid: "u1", sources: ["history"] }));
+  });
+  it("asks before replacing a bot the team already sent, and says who sent it", () => {
+    api.sendBot.mockClear();   // earlier cases in this file record sends; this one must see none
+    sentValue = { text: "x", sources: ["biology"], sentBy: "u9" };
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<TrainBot {...base} members={{ u9: { name: "Sana", teamId: "tA" } }} />);
+    expect(screen.getByText(/sent by Sana/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Cricket/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Train my bot/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Send my bot/ }));
+    expect(confirmSpy).toHaveBeenCalledWith(expect.stringMatching(/already sent .*biology.*Replace it\?/));
+    expect(api.sendBot).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+    sentValue = null;
   });
 });

@@ -92,6 +92,10 @@ activity 2. Activity 1 phases/tabs are untouched.
   Other) → type question (≤ 120 chars) → **Ask** → answer bubble + coverage line →
   vote **Right / Wrong / Nonsense** (required before next ask; one vote per answer —
   "Ask again" produces a new answer with its own vote). Verdict writes `votes/{id}`.
+- When it recognised no words the line reads 'It recognised none of your words. It answered
+  anyway.'; when the question has no content words the line is hidden. The topic chip resets
+  after every question. 'Ask again' appends a new answer (max two extra tries per question),
+  each with its own vote. A short typing pause precedes every answer.
 - My history of Q&A on the phone (session only).
 - **"Show me everything it has ever read"**: expands the full history text; words from
   the last question that the bot recognised are highlighted.
@@ -99,13 +103,14 @@ activity 2. Activity 1 phases/tabs are untouched.
 
 ## 6. Scoreboard (screen `Scoreboard`, projector)
 
-- Per-topic bars: % Right, with counts. Fixed topic order (History first) so bars don't jump on the projector.
-- Headline: "It answered N questions. It was right about X% of history and Y% of
-  everything else."
-- Feed: latest 8 Q&As (question, answer, topic, verdict, coverage) — refreshes live.
-- The reveal question: "It never once said 'I don't know'. Why not?"
-- In phase `exam` and later, the **Cross-examination leaderboard** appears below (see §8).
-- Needs ≥ 10 votes before bars show (else "waiting for questions").
+- During phase `chat` the Scoreboard shows only the live feed and a running count ("{N}
+  answers judged so far"); headline, bars, the reveal question and "Nonsense of the day"
+  appear from phase `reveal` once ≥ 10 votes exist. Topics with < 3 votes show "—".
+  Questions containing denylisted words (`src/lm/projectorFilter.js`) stay off the
+  projector; the teacher can hide any feed item. The corpus renders projector-sized (three
+  columns, no scroll) with the focused question's recognised words highlighted (tap a feed
+  item to focus it). In phase `exam` each leaderboard row carries a per-topic strip over
+  strangers' votes.
 
 ## 7. Part 2 · Train your bot (screen `TrainBot`, teams)
 
@@ -129,6 +134,8 @@ activity 2. Activity 1 phases/tabs are untouched.
   `n` foreign votes; sorted by foreign % desc; Nonsense counts as Wrong. Needs ≥ 3
   foreign votes per bot before a % shows.
 - Header: "Every bot is now questioned by strangers. Which one survived?"
+- The default bot is a random other team's bot (stable per student). Sources are shown
+  ("fed on: …").
 - One round only.
 
 ## 9. Data model additions (RTDB, under `rooms/{CODE}`)

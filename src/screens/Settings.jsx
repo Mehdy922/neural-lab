@@ -14,13 +14,13 @@ const RUN_SHEET = [
 ];
 
 const RUN_SHEET_2 = [
-  ["0:00", "Teams of four. Room code in."],
-  ["0:03", "Ask HistoryBot anything. Tag the topic, vote."],
-  ["0:12", "Reveal scoreboard. Let them read the bars."],
-  ["0:15", "Show me everything it has ever read."],
-  ["0:18", "Start training. Pick texts, paste your own, train, test, send."],
-  ["0:28", "Open cross-examination. Ask strangers' bots."],
-  ["0:36", "Leaderboard. The question: whose text was it?"],
+  ["0:00", "Teams of four. Room code in. Projector: Lobby."],
+  ["0:03", "Start chatting. Projector: Scoreboard (only the feed shows). Say nothing about how it works."],
+  ["0:11", "Reveal scoreboard. Let them read the bars. Ask the question on screen."],
+  ["0:14", "Show me everything it has ever read. Tap a question to highlight its words."],
+  ["0:18", "Start training. One phone per team sends. Agree first."],
+  ["0:26", "Open cross-examination. Ask strangers' bots. Be a fair examiner."],
+  ["0:34", "Leaderboard. Look at the strips: every bot has one bump. Where is it?"],
   ["0:40", "Out."],
 ];
 
@@ -116,6 +116,14 @@ export function Settings({ code, meta, flash, activity = 1 }) {
                 Tap "Show me everything it has ever read" on the projector. Then ask the class: it never
                 once said "I don't know". Why not?
               </p>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>Before you start</h2>
+              <p style={S.notesP}>Students will ask it about religion. It will answer with random history sentences. Say once, before you start: it does not understand a word you type — that is the point. Questions with a few sensitive words stay off the projector automatically; tap ✕ on any feed item to hide it. Hiding and highlighting work on the device that is showing the projector.</p>
+              <h2 style={{ ...S.h2, marginTop: 18 }}>Say this</h2>
+              <p style={S.notesP}><b>Chat:</b> "There is a bot on your phone. It has read exactly one thing in its life. Ask it anything. Tag the topic, read the answer, then tell me: right, wrong, or nonsense. Be honest — this is a report on it, not a vote for it."</p>
+              <p style={S.notesP}><b>Reveal:</b> "Read the headline to me. It answered every single question in full sentences and never once said 'I don't know'. Why not?" Take three answers, agree with none. Then press Show me everything it has ever read: "This is its whole mind. Find the sentence yours came from."</p>
+              <p style={S.notesP}><b>Train:</b> "Now build your own. Tick what it reads — that is everything it will ever know. Train it, ask it about its topic, then about something else. Watch the coverage line."</p>
+              <p style={S.notesP}><b>Exam:</b> "Every bot is now questioned by strangers. Ask other teams' bots. Be a fair examiner." Then: "Look at the strips. Every bot has one bump. Where is the bump? That is what it read."</p>
+              <p style={S.notesP}><b>Wrap:</b> "Last lesson: a machine only knows what it was shown. This lesson: a language model only says what it has read, one word at a time, confidently, about anything. The big ones have read millions of times more, so the mistakes are rarer and harder to spot. What did it read, and who chose that?"</p>
             </>
           ) : (
             <>

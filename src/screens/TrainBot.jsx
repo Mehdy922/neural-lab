@@ -9,7 +9,7 @@ import { BotChat } from "../components/BotChat.jsx";
 
 const countWords = (t) => tokenize(t).filter(isWord).length;
 
-export function TrainBot({ code, uid, team, isTeacher, flash }) {
+export function TrainBot({ code, uid, team, members, isTeacher, flash }) {
   const [picked, setPicked] = useState([]);       // starter ids
   const [own, setOwn] = useState("");
   const [model, setModel] = useState(null);
@@ -26,6 +26,7 @@ export function TrainBot({ code, uid, team, isTeacher, flash }) {
   const send = async () => {
     if (!model) return flash("Train it first.");
     if (!team) return flash(isTeacher ? "Teachers don't enter the cross-examination. Join a team to try it." : "Join a team in the Lobby first.");
+    if (sent.value && !window.confirm(`${team.name} already sent a bot (${(sent.value.sources || []).join(", ") || "own text"}). Replace it?`)) return;
     if (combined.length > MAX_BOT_TEXT) return flash(`Too long to send: keep it under ${MAX_BOT_TEXT.toLocaleString()} characters.`);
     setSending(true);
     try {
@@ -54,6 +55,7 @@ export function TrainBot({ code, uid, team, isTeacher, flash }) {
             maxLength={MAX_OWN_TEXT} placeholder="Paste anything: a page of notes, a story, a match report…" onChange={(e) => { setOwn(e.target.value); setModel(null); }}
             aria-label="Your own text" />
           <div style={S.counter}>{ownWords} words · {own.length.toLocaleString()} / {MAX_OWN_TEXT.toLocaleString()} characters</div>
+          <p style={S.hint}>Tip: copy a paragraph from your notes or any website. Typing 150 words on a phone takes too long.</p>
         </div>
         <button className="nl-btn" style={{ ...S.train, marginTop: 12 }} disabled={!ready} onClick={train}>
           Train my bot ({words.toLocaleString()} words)
@@ -74,7 +76,7 @@ export function TrainBot({ code, uid, team, isTeacher, flash }) {
           <p style={S.empty}>Train it first. Then ask it a few questions here before you send it.</p>
         )}
         {team && sent.value && (
-          <p style={{ ...S.hint, color: C.leaf, fontWeight: 800 }}>✓ {team.name}'s bot is in ({(sent.value.sources || []).join(", ") || "own text"}). Sending again replaces it.</p>
+          <p style={{ ...S.hint, color: C.leaf, fontWeight: 800 }}>✓ {team.name}'s bot is in ({(sent.value.sources || []).join(", ") || "own text"}), sent by {members?.[sent.value.sentBy]?.name || "a teammate"}. Sending again replaces it.</p>
         )}
       </section>
     </main>
