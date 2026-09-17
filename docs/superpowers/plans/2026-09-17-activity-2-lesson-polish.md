@@ -98,7 +98,7 @@ Append to the `describe("generate", …)` block in `src/lm/ngram.test.js`:
     const { text, seededFrom } = generate(m2, "What is the capital of the empire", { seed: 0 });
     expect(seededFrom).toBe("question");
     expect(text.toLowerCase().startsWith("what is")).toBe(false);
-    expect(text.toLowerCase().startsWith("capital")).toBe(true);
+    expect(text.toLowerCase().startsWith("the capital")).toBe(true);   // "the capital" (score 1) beats "what is" (score 0); no content+content pair exists here
   });
   it("falls back to a stopword+content pair before a lone word", () => {
     const { text, seededFrom } = generate(m, "Tell me about the coast", { seed: 0 });
@@ -564,6 +564,8 @@ describe("isProjectorSafe", () => {
     expect(isProjectorSafe("WHAT DOES GOD LOOK LIKE?")).toBe(false);
     expect(isProjectorSafe("is this a good idea")).toBe(true);      // "god" inside "good" is not a word match
     expect(isProjectorSafe("Who founded the Muslim League?")).toBe(true);
+    expect(isProjectorSafe("When did Akbar die?")).toBe(true);          // legitimate history must reach the projector
+    expect(isProjectorSafe("How did Islam reach Sindh?")).toBe(true);
     expect(isProjectorSafe("")).toBe(true);
   });
   it("exports the list so the teacher notes can describe it", () => {
@@ -575,10 +577,12 @@ describe("isProjectorSafe", () => {
 ```js
 // Questions containing these words are still answered on the phone, but are kept off the projector feed.
 // Teachers can also hide any feed item by tapping it. Keep this list short; it is a courtesy, not a filter.
+// Deity/scripture names (the juxtaposition risk the review named) plus profanity and a few violence terms.
+// Deliberately NOT here: religion, islam, hindu, die, dead, kill — those are legitimate history questions ("When did Akbar die?").
 export const PROJECTOR_DENYLIST = [
-  "allah", "god", "gods", "prophet", "quran", "koran", "bible", "jesus", "religion", "islam", "hindu", "hindus", "christian", "jew", "jews",
+  "allah", "god", "gods", "prophet", "quran", "koran", "bible", "jesus",
   "sex", "sexy", "porn", "nude", "naked", "fuck", "fucking", "shit", "bitch", "bastard", "dick", "penis", "vagina", "boobs",
-  "kill", "killing", "murder", "suicide", "die", "dead", "rape", "terrorist", "bomb", "gay", "lesbian",
+  "suicide", "rape", "terrorist", "bomb", "gay", "lesbian",
 ];
 const RE = new RegExp(`\\b(${PROJECTOR_DENYLIST.join("|")})\\b`, "i");
 export const isProjectorSafe = (q) => !RE.test(String(q || ""));
@@ -883,7 +887,7 @@ describe("Exam", () => {
   it("starts on another team's bot, never your own", () => {
     render(<Exam {...base} team={{ id: "tA", name: "Aloo" }} />);
     expect(screen.getByText(/Asking/).textContent).not.toMatch(/Aloo's bot/);
-    expect(screen.getByText(/fed on: (cooking|space)/)).toBeTruthy();
+    expect(screen.getByText(/Asking/).textContent).toMatch(/fed on: (cooking|space)/);   // sources sit in a nested <b>, so match on the paragraph's textContent
   });
   it("spreads examiners across bots by uid", () => {
     const picks = new Set();
@@ -965,7 +969,7 @@ Append to `src/screens/Settings.test.jsx` (follow the file's existing activity-2
     render(<Settings {...base} activity={2} />);
     expect(screen.getByText(/Students will ask it about religion/)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Say this" })).toBeTruthy();
-    expect(screen.getByText(/every bot has one bump/i)).toBeTruthy();
+    expect(screen.getByText(/Where is the bump/)).toBeTruthy();   // unique to the script ("one bump" also appears in the run sheet)
   });
 ```
 In `src/screens/Settings.jsx`:
