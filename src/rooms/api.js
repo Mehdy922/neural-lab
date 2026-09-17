@@ -3,6 +3,7 @@ import { getFirebase } from "../firebase.js";
 import { generateRoomCode } from "./codes.js";
 import { packNet, packPix } from "../ml/net.js";
 import { buildTournamentTable } from "../ml/scoring.js";
+import { TOPIC_IDS, VERDICT_IDS } from "../lm/scoring.js";
 
 export const DEFAULT_LABELS = ["Mango", "Cricket ball"];
 export const DEFAULT_TEAM_CAP = 4;
@@ -10,6 +11,10 @@ export const TEST_PER_LABEL = 3;
 export const MAX_CHALLENGE_POINTS = 60;
 export const MAX_TEAMS_MIN = 2;
 export const MAX_TEAMS_MAX = 20;
+export const MAX_Q = 120;
+export const MAX_A = 240;
+export const MAX_BOT_TEXT = 6000;
+export const MIN_BOT_WORDS = 150;
 
 const roomRef = (code, sub = "") => ref(getFirebase().db, `rooms/${code}${sub ? "/" + sub : ""}`);
 const clampCap = (n) => Math.max(1, Math.min(12, Math.round(Number(n) || DEFAULT_TEAM_CAP)));
@@ -24,7 +29,7 @@ export function normalizeMaxTeams(v) {
 }
 
 // ── rooms ────────────────────────────────────────────────────────────────
-export async function createRoom({ uid, labels = DEFAULT_LABELS, teamCap = DEFAULT_TEAM_CAP, maxTeams = null }) {
+export async function createRoom({ uid, labels = DEFAULT_LABELS, teamCap = DEFAULT_TEAM_CAP, maxTeams = null, activity = 1 }) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateRoomCode();
     const snap = await get(roomRef(code, "meta"));
@@ -34,6 +39,7 @@ export async function createRoom({ uid, labels = DEFAULT_LABELS, teamCap = DEFAU
       labels: [cleanLabel(labels[0]) || DEFAULT_LABELS[0], cleanLabel(labels[1]) || DEFAULT_LABELS[1]],
       teamCap: clampCap(teamCap),
       ...(limit ? { maxTeams: limit } : {}),
+      activity: Number(activity) === 2 ? 2 : 1,
       round: 1,
       phase: "lobby",
       teacherUid: uid,
@@ -113,8 +119,10 @@ export const setLabels = ({ code, labels }) => update(roomRef(code, "meta"), { l
 export const setTeamCap = ({ code, teamCap }) => update(roomRef(code, "meta"), { teamCap: clampCap(teamCap) });
 // null removes the key → no limit.
 export const setMaxTeams = ({ code, maxTeams }) => update(roomRef(code, "meta"), { maxTeams: normalizeMaxTeams(maxTeams) });
-export const resetBoard = ({ code }) =>
-  update(roomRef(code), { models: null, challenges: null, rounds: null, "meta/phase": "teach", "meta/round": 1 });
+export const resetBoard = ({ code, activity = 1 }) =>
+  Number(activity) === 2
+    ? update(roomRef(code), { votes: null, bots: null, botVotes: null, "meta/phase": "chat" })
+    : update(roomRef(code), { models: null, challenges: null, rounds: null, "meta/phase": "teach", "meta/round": 1 });
 export const closeRoom = ({ code }) => update(roomRef(code, "meta"), { closed: true });
 
 // ── rounds ───────────────────────────────────────────────────────────────
@@ -144,3 +152,30 @@ export async function nextRound({ code, round, teams }) {
   });
   return current + 1;
 }
+
+// ── activity 2: votes and bots ────────────────────────────────────────────
+const clampStr = (s, n) => String(s ?? "").trim().slice(0, n);
+const checkEnums = (topic, verdict) => {
+  if (!TOPIC_IDS.includes(topic)) throw new Error(`invalid topic: ${topic}`);
+  if (!VERDICT_IDS.includes(verdict)) throw new Error(`invalid verdict: ${verdict}`);
+};
+
+export function buildVote({ uid, topic, verdict, q, a = "", known = 0, total = 0 }) {
+  checkEnums(topic, verdict);
+  return { uid, topic, verdict, q: clampStr(q, MAX_Q), a: clampStr(a, MAX_A), known: Number(known) || 0, total: Number(total) || 0, at: serverTimestamp() };
+}
+export const castVote = ({ code, ...vote }) => set(push(roomRef(code, "votes")), buildVote(vote));
+
+export function buildBotVote({ uid, askerTeamId, botTeamId, topic, verdict, q }) {
+  checkEnums(topic, verdict);
+  return { uid, ...(askerTeamId ? { askerTeamId } : {}), botTeamId, topic, verdict, q: clampStr(q, MAX_Q), at: serverTimestamp() };
+}
+export const castBotVote = ({ code, ...vote }) => set(push(roomRef(code, "botVotes")), buildBotVote(vote));
+
+export const sendBot = ({ code, teamId, uid, text, sources = [] }) =>
+  set(roomRef(code, `bots/${teamId}`), {
+    text: clampStr(text, MAX_BOT_TEXT),
+    ...(sources.length ? { sources: sources.slice(0, 8).map((s) => clampStr(s, 24)) } : {}),
+    sentBy: uid,
+    at: serverTimestamp(),
+  });

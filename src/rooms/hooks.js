@@ -45,3 +45,8 @@ export const useModels = (code, enabled = true) => usePath(code ? `rooms/${code}
 export const useChallenges = (code, enabled = true) => usePath(code ? `rooms/${code}/challenges` : null, enabled);
 export const useRounds = (code, enabled = true) => usePath(code ? `rooms/${code}/rounds` : null, enabled);
 export const useTeamModel = (code, teamId) => usePath(code && teamId ? `rooms/${code}/models/${teamId}` : null, Boolean(teamId));
+
+export const useVotes = (code, enabled = true) => usePath(code ? `rooms/${code}/votes` : null, enabled);
+export const useBots = (code, enabled = true) => usePath(code ? `rooms/${code}/bots` : null, enabled);
+export const useBotVotes = (code, enabled = true) => usePath(code ? `rooms/${code}/botVotes` : null, enabled);
+export const useTeamBot = (code, teamId) => usePath(code && teamId ? `rooms/${code}/bots/${teamId}` : null, Boolean(teamId));

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickTests, buildModelPayload, normalizeMaxTeams, summarizeRound, TEST_PER_LABEL, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX } from "./api.js";
+import { pickTests, buildModelPayload, normalizeMaxTeams, summarizeRound, TEST_PER_LABEL, DEFAULT_LABELS, DEFAULT_TEAM_CAP, MAX_TEAMS_MIN, MAX_TEAMS_MAX, buildVote, buildBotVote, MAX_Q, MAX_A, MAX_BOT_TEXT, MIN_BOT_WORDS } from "./api.js";
 import { newNet } from "../ml/net.js";
 
 const mk = (label, v) => ({ label, pix: new Array(4).fill(v) });
@@ -73,5 +73,29 @@ describe("normalizeMaxTeams", () => {
     expect(normalizeMaxTeams("5")).toBe(5);
     expect(normalizeMaxTeams(5.6)).toBe(6);
     expect(normalizeMaxTeams(25)).toBe(20);
+  });
+});
+
+describe("buildVote / buildBotVote", () => {
+  it("trims and clamps, validates enums", () => {
+    const v = buildVote({ uid: "u1", topic: "science", verdict: "wrong", q: "  " + "x".repeat(200), a: "y".repeat(300), known: "1", total: 3 });
+    expect(v.q).toHaveLength(MAX_Q);
+    expect(v.a).toHaveLength(MAX_A);
+    expect(v.known).toBe(1);
+    expect(v.total).toBe(3);
+    expect(v.at).toBeTruthy();
+    expect(() => buildVote({ uid: "u1", topic: "gossip", verdict: "wrong", q: "q" })).toThrow(/topic/);
+    expect(() => buildVote({ uid: "u1", topic: "science", verdict: "maybe", q: "q" })).toThrow(/verdict/);
+  });
+  it("bot vote omits askerTeamId when the asker has no team", () => {
+    const b = buildBotVote({ uid: "u1", askerTeamId: null, botTeamId: "tB", topic: "sport", verdict: "right", q: "q" });
+    expect(b).not.toHaveProperty("askerTeamId");
+    expect(b.botTeamId).toBe("tB");
+    const c = buildBotVote({ uid: "u1", askerTeamId: "tA", botTeamId: "tB", topic: "sport", verdict: "right", q: "q" });
+    expect(c.askerTeamId).toBe("tA");
+  });
+  it("limits", () => {
+    expect(MAX_BOT_TEXT).toBe(6000);
+    expect(MIN_BOT_WORDS).toBe(150);
   });
 });

@@ -16,7 +16,7 @@ vi.mock("../firebase.js", () => ({
   ensureAuth: () => Promise.resolve("uid-1"),
 }));
 
-import { usePath, useRoom, useAuth } from "./hooks.js";
+import { usePath, useRoom, useAuth, useVotes, useBots, useBotVotes, useTeamBot } from "./hooks.js";
 
 beforeEach(() => { subs.clear(); offs.clear(); errs.clear(); });
 
@@ -86,5 +86,19 @@ describe("useAuth", () => {
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.uid).toBe("uid-1"));
     expect(result.current.error).toBeNull();
+  });
+});
+
+describe("activity 2 hooks", () => {
+  it("subscribe to the right paths and honour enabled", () => {
+    renderHook(() => useVotes("ABCDE", true));
+    renderHook(() => useBots("ABCDE", true));
+    renderHook(() => useBotVotes("ABCDE", false));
+    renderHook(() => useTeamBot("ABCDE", "tA"));
+    renderHook(() => useTeamBot("ABCDE", null));
+    expect(subs.has("rooms/ABCDE/votes")).toBe(true);
+    expect(subs.has("rooms/ABCDE/bots")).toBe(true);
+    expect(subs.has("rooms/ABCDE/botVotes")).toBe(false);
+    expect(subs.has("rooms/ABCDE/bots/tA")).toBe(true);
   });
 });
