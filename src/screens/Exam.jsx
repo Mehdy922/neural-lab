@@ -48,7 +48,7 @@ export function Exam({ code, uid, teams, team, isTeacher, flash }) {
             </div>
             {model && (
               <>
-                <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? <> · fed on: <b>{bots[botId].sources.map(sourceTitle).join(", ")}</b>. Ask it about those, then about something else.</> : "."} Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count for strangers." : ""}</p>
+                <p style={S.hint}>Asking <b>{name(botId)}'s bot</b>{(bots[botId].sources || []).length ? <> · fed on: <b>{bots[botId].sources.map(sourceTitle).join(", ")}</b>. Ask it about those, then about something else.</> : "."} Pick the topic, ask, vote. {team?.id === botId ? "Votes on your own bot don't count on the leaderboard." : ""}</p>
                 <BotChat key={botId} model={model} botName={`${name(botId)}'s bot`} requireVote={!isTeacher} onVote={onVote} />
               </>
             )}

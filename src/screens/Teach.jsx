@@ -85,7 +85,7 @@ export function Teach({ code, uid, members, labels, team, isTeacher, flash, roun
         </section>
       )}
       <section style={S.card} className="nl-fade">
-        <h2 style={S.h2}>Draw {MIN_PER_LABEL}–6 of each</h2>
+        <h2 style={S.h2}>Draw 5 of each ({MIN_PER_LABEL} at least)</h2>
         <div style={S.pickRow}>
           {labels.map((l, i) => (
             <button key={i} className="nl-btn" onClick={() => setWhich(i)}
@@ -112,7 +112,7 @@ export function Teach({ code, uid, members, labels, team, isTeacher, flash, roun
       </section>
 
       <section style={S.card} className="nl-fade">
-        <h2 style={S.h2}>Your training set</h2>
+        <h2 style={S.h2}>Your examples</h2>
         {samples.length === 0 ? (
           <p style={S.empty}>Nothing yet. Every drawing you add is one example the machine gets to learn from.</p>
         ) : (

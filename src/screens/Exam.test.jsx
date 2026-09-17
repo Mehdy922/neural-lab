@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 const TEXT = "Cricket is a bat and ball game. The bowler bowls the ball. The batter hits the ball. A match has two innings.";
 const THREE = { tA: { text: TEXT, sources: ["cricket"] }, tB: { text: TEXT, sources: ["cooking"] }, tC: { text: TEXT, sources: ["space"] } };
@@ -22,6 +22,11 @@ describe("Exam", () => {
     render(<Exam {...base} team={{ id: "tA", name: "Aloo" }} />);
     expect(screen.getByText(/Asking/).textContent).not.toMatch(/Aloo's bot/);
     expect(screen.getByText(/Asking/).textContent).toMatch(/fed on: (In the kitchen|Space)\./);   // sources sit in a nested <b>, so match on the paragraph's textContent
+  });
+  it("says own-bot votes don't count on the leaderboard when a student picks their own bot", () => {
+    render(<Exam {...base} team={{ id: "tA", name: "Aloo" }} />);
+    fireEvent.click(screen.getByRole("button", { name: /Aloo \(yours\)/ }));
+    expect(screen.getByText(/Asking/).textContent).toMatch(/Votes on your own bot don't count on the leaderboard\./);
   });
   it("spreads examiners across bots by uid", () => {
     const picks = new Set();

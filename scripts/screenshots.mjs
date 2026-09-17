@@ -94,7 +94,7 @@ await pick("Mango");
 await drawMango(1); // leave one on the canvas for the shot
 await page.waitForTimeout(400);
 const drawCard = page.locator("main > section", { hasText: "Add this drawing" });
-const setCard = page.locator("main > section", { hasText: "Your training set" });
+const setCard = page.locator("main > section", { hasText: "Your examples" });
 await page.screenshot({ path: `${OUT}/teach-full.png`, fullPage: true });
 await drawCard.screenshot({ path: `${OUT}/teach-drawing.png` });
 

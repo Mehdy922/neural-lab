@@ -20,7 +20,7 @@ import { GRID, NPIX } from "../src/ml/capture.js";
 import { buildModelPayload, summarizeRound, DEFAULT_TEAM_CAP, normalizeMaxTeams, buildVote, buildBotVote } from "../src/rooms/api.js";
 import { buildTournamentTable, tableAverages, withDeltas, historyAverages, MIN_TEAMS_MEANINGFUL } from "../src/ml/scoring.js";
 import { generateRoomCode } from "../src/rooms/codes.js";
-import { visibleTabs } from "../src/rooms/phases.js";
+import { visibleTabs, ACTIVITIES } from "../src/rooms/phases.js";
 import { drawShape, STYLES } from "./lib/pixelart.mjs";
 import { trainModel, coverage, generate } from "../src/lm/ngram.js";
 import { HISTORY_TEXT, STARTER_TEXTS } from "../src/lm/texts/index.js";
@@ -110,7 +110,8 @@ await set(R(teacher, code, "meta"), {
   ...(ACTIVITY === 2 ? { activity: 2 } : {}),
   round: 1, phase: "lobby", teacherUid: teacher.uid, createdAt: serverTimestamp(),
 });
-log(`   room ${code} · ${LABELS[0]} vs ${LABELS[1]} · max ${TEAM_CAP} per team · max teams ${MAX_TEAMS ?? "unlimited"}`);
+// Activity 2 has no drawing pair, so the room line names the activity instead (as the app's header does).
+log(`   room ${code} · ${ACTIVITY === 2 ? ACTIVITIES[2].title : `${LABELS[0]} vs ${LABELS[1]}`} · max ${TEAM_CAP} per team · max teams ${MAX_TEAMS ?? "unlimited"}`);
 log(`   join link: https://mehdy922.github.io/neural-lab/?room=${code}`);
 
 step("Students join at once (QR scan → name → Join)");

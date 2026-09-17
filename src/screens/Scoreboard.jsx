@@ -11,6 +11,7 @@ import { Corpus } from "../components/Corpus.jsx";
 const MIN_TOPIC_VOTES = 3;
 const barColor = (p) => (p == null ? C.line : p > 0.6 ? C.leaf : p > 0.3 ? C.mangoDeep : C.red);
 const verdictEmoji = (v) => VERDICTS.find((x) => x.id === v)?.emoji || "";
+const verdictLabel = (v) => VERDICTS.find((x) => x.id === v)?.label || v;
 const topicEmoji = (t) => TOPICS.find((x) => x.id === t)?.emoji || "";
 
 function TopicStrip({ rows, label }) {
@@ -115,7 +116,7 @@ export function Scoreboard({ code, teams, meta, isTeacher }) {
               </div>
               <div style={{ color: C.muted }}>{f.a}</div>
               <div style={S.coverage}>
-                {verdictEmoji(f.verdict)} {f.verdict}
+                {verdictEmoji(f.verdict)} {verdictLabel(f.verdict)}
                 {f.total === 0 ? null : f.known === 0 ? " · recognised none of the words" : ` · recognised ${f.known} of ${f.total} words`}
               </div>
             </div>
@@ -151,7 +152,7 @@ export function Scoreboard({ code, teams, meta, isTeacher }) {
         <div style={{ marginTop: 28 }}>
           <h2 style={S.h2}>🎤 Cross-examination</h2>
           <p style={S.lede}>Every bot is now questioned by strangers. Which one survived?</p>
-          <p style={S.hint}>Each strip shows the bot's accuracy per topic, in this order: History · Science · Sport · Maths · Everyday · Other. Every bot has one bump. Where is it?</p>
+          <p style={S.hint}>Each strip shows how often it was right, topic by topic, in this order: History · Science · Sport · Maths · Everyday · Other. Every bot has one bump. Where is it?</p>
           {board.length === 0 ? <p style={S.empty}>No bots sent yet.</p> : (
             <div style={S.table} role="table" aria-label="Bot leaderboard">
               <div style={{ ...S.tr, ...S.thead, gridTemplateColumns: "1.4fr .6fr .6fr 1fr 2fr" }} role="row"><span>Bot</span><span>Own team</span><span>Strangers</span><span>By topic</span><span /></div>

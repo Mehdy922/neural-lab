@@ -36,7 +36,7 @@ export function Chat({ code, uid, isTeacher, flash }) {
           <button className="nl-btn" style={S.accent} onClick={() => setShowCorpus((v) => !v)}>
             {showCorpus ? "Hide what it has read" : "Show me everything it has ever read"}
           </button>
-          <span style={S.hint}>{stats.words.toLocaleString()} words · {stats.vocab.toLocaleString()} different words. That is its whole mind.</span>
+          <span style={S.hint}>about 2,000 words · {stats.vocab.toLocaleString()} different words. That is its whole mind.</span>
         </div>
         {showCorpus && (
           <div style={{ marginTop: 14 }}>

@@ -15,6 +15,7 @@ describe("TrainBot", () => {
 
   it("needs 150 words before Train enables; a starter text is enough", () => {
     render(<TrainBot {...base} />);
+    expect(screen.getByRole("heading", { name: "🧪 Train your bot" })).toBeTruthy();   // matches the tab label
     const train = screen.getByRole("button", { name: /Train my bot/ });
     expect(train.disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: /Cricket/ }));

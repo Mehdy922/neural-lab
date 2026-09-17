@@ -41,7 +41,7 @@ export function TrainBot({ code, uid, team, members, isTeacher, flash }) {
   return (
     <main style={S.main}>
       <section style={S.card} className="nl-fade">
-        <h2 style={S.h2}>🧪 Feed your bot</h2>
+        <h2 style={S.h2}>🧪 Train your bot</h2>
         <p style={S.hint}>Pick what your bot reads. Everything you tick is the whole of what it will ever know.</p>
         <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
           {STARTER_TEXTS.map((t) => (

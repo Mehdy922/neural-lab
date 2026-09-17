@@ -36,6 +36,8 @@ describe("Scoreboard", () => {
     expect(screen.queryByRole("button", CORPUS_BTN)).toBeNull();          // the corpus is a reveal beat
     expect(screen.getByText(/14 answers judged so far/)).toBeTruthy();
     expect(screen.getByText("q15")).toBeTruthy();                       // newest feed item (at = 15)
+    expect(screen.getAllByText(/👍 Right · recognised 1 of 2 words/).length).toBeGreaterThan(0);   // the verdict shows its label, not its id
+    expect(screen.getAllByText(/🤪 Nonsense/).length).toBeGreaterThan(0);
   });
   it("shows per-topic bars, the headline split, the question, the corpus card and the nonsense of the day once revealed", () => {
     votesValue = many();
@@ -118,6 +120,7 @@ describe("Scoreboard", () => {
     };
     render(<Scoreboard {...base} meta={{ phase: "exam", activity: 2 }} />);
     expect(screen.getByText("Every bot is now questioned by strangers. Which one survived?")).toBeTruthy();
+    expect(screen.getByText("Each strip shows how often it was right, topic by topic, in this order: History · Science · Sport · Maths · Everyday · Other. Every bot has one bump. Where is it?")).toBeTruthy();
     expect(screen.getByText(/waiting for questions/i)).toBeTruthy();
     expect(screen.getByText("67%")).toBeTruthy();
     expect(screen.getByLabelText("Accuracy by topic for Aloo")).toBeTruthy();
