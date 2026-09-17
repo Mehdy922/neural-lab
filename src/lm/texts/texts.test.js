@@ -49,3 +49,37 @@ describe("HistoryBot behaviour", () => {
     expect(generate(m, "Tell me about Akbar and Fatehpur Sikri", { seed: 0 }).seededFrom).toBe("question");
   });
 });
+
+describe("HistoryBot accuracy (the punchline must survive text edits)", () => {
+  const model = trainModel(HISTORY_TEXT);
+  const QA = [
+    ["Who built the Taj Mahal?", /shah jahan|taj mahal|mumtaz/],
+    ["When did Pakistan become independent?", /1947|independent/],
+    ["Who founded the Muslim League?", /muslim league|1906|dhaka/],
+    ["What happened at the battle of Panipat?", /babur|panipat|lodi|1526/],
+    ["Who was Akbar?", /akbar|mughal|fatehpur/],
+    ["What was the Lahore Resolution?", /lahore resolution|1940|resolution/],
+    ["Who is Muhammad Ali Jinnah?", /jinnah|quaid|muslim league|governor/],
+    ["Tell me about the Indus Valley", /indus|mohenjo|harappa|cities|drains/],
+    ["Who was Ashoka?", /ashoka|maurya|kalinga|buddhism|pillars|edicts/],
+    ["What is Taxila famous for?", /taxila|learning|students|gandhara/],
+    ["Who was Muhammad bin Qasim?", /qasim|sindh|dahir|712|arab/],
+    ["What did Sir Syed Ahmad Khan do?", /aligarh|syed|college|education|1875/],
+    ["What happened in 1857?", /1857|uprising|company|rose up|british/],
+    ["Who was Ranjit Singh?", /ranjit|sikh|punjab|lahore|maharaja/],
+    ["What was the first capital of Pakistan?", /karachi|capital/],
+    ["Who built Fatehpur Sikri?", /akbar|fatehpur|sikri/],
+    ["Who was Babur?", /babur|timur|panipat|mughal|central asia/],
+    ["When was the battle of Plassey?", /plassey|1757|bengal|company/],
+    ["What did Allama Iqbal say in 1930?", /iqbal|1930|allahabad|homeland/],
+    ["Who was Aurangzeb?", /aurangzeb|1707|1658|deccan|mughal/],
+  ];
+  it("answers at least 10 of 20 plain history questions on topic (seed 0)", () => {
+    const hits = QA.filter(([q, re]) => re.test(generate(model, q, { seed: 0 }).text.toLowerCase()));
+    expect(hits.length, `on-topic: ${hits.map(([q]) => q).join(" | ")}`).toBeGreaterThanOrEqual(10);
+  });
+  it("never opens two different questions with the same stopword phrase", () => {
+    const opens = QA.map(([q]) => generate(model, q, { seed: 0 }).text.toLowerCase().split(" ").slice(0, 2).join(" "));
+    expect(opens.filter((o) => o === "what is").length).toBe(0);
+  });
+});

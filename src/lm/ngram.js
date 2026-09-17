@@ -1,7 +1,7 @@
 // A word-level trigram language model with backoff. This is honestly what runs in the app:
 // the bot predicts the next word from counts of what it has read. Nothing else.
 import { mulberry32 } from "../ml/net.js";
-import { tokenize, contentWords, detokenize, hashString, isWord, isEnd } from "./tokenize.js";
+import { tokenize, contentWords, detokenize, hashString, isWord, isEnd, STOPWORDS } from "./tokenize.js";
 
 const bump = (obj, k) => { obj[k] = (obj[k] || 0) + 1; };
 
@@ -48,11 +48,19 @@ export function generate(model, question, { seed = 0, maxWords = 40, minWords = 
   const qTokens = tokenize(question).filter(isWord);
   let w1 = null, w2 = null, seededFrom = "random";
 
-  // 1. An adjacent pair of question words that the model has seen together.
-  for (let i = 0; i + 1 < qTokens.length && !w1; i++) {
+  // 1. The best adjacent pair of question words the model has seen together.
+  //    Score = number of content (non-stop) words in the pair; a pair of two stopwords is never used.
+  //    Ties break toward the rarer pair (more informative).
+  let best = null;
+  for (let i = 0; i + 1 < qTokens.length; i++) {
     const a = qTokens[i], b = qTokens[i + 1];
-    if (model.bi[a]?.[b]) { w1 = a; w2 = b; seededFrom = "question"; }
+    if (!model.bi[a]?.[b]) continue;
+    const score = (STOPWORDS.has(a) ? 0 : 1) + (STOPWORDS.has(b) ? 0 : 1);
+    if (score === 0) continue;
+    const rarity = model.uni[a] + model.uni[b];
+    if (!best || score > best.score || (score === best.score && rarity < best.rarity)) best = { a, b, score, rarity };
   }
+  if (best) { w1 = best.a; w2 = best.b; seededFrom = "question"; }
   // 2. The rarest known content word (most informative), then its most likely continuation.
   if (!w1) {
     const cands = contentWords(question).filter((w) => model.uni[w] && model.bi[w]);

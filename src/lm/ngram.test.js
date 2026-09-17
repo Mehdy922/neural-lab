@@ -33,9 +33,9 @@ describe("coverage", () => {
   });
   it("reports unknown words for off-topic questions", () => {
     const c = coverage(m, "What is a cell made of?");
-    expect(c.total).toBe(2);            // cell, made
+    expect(c.total).toBe(1);            // cell ("made" is now a stopword)
     expect(c.known).toBe(0);
-    expect(c.unknownWords).toEqual(["cell", "made"]);
+    expect(c.unknownWords).toEqual(["cell"]);
   });
 });
 
@@ -66,6 +66,23 @@ describe("generate", () => {
   it("a different attempt changes the seed input", () => {
     const outs = new Set(Array.from({ length: 6 }, (_, i) => generate(m, "Akbar", { seed: i }).text));
     expect(outs.size).toBeGreaterThan(1);
+  });
+  it("prefers a pair with content words over a stopword pair", () => {
+    // "the mughal" and "mughal empire" are both known bigrams; "the mughal" is stopword+content, "mughal empire" is content+content.
+    const { text } = generate(m, "Tell me about the Mughal empire", { seed: 0 });
+    expect(text.toLowerCase().startsWith("mughal empire")).toBe(true);
+  });
+  it("never seeds from a pair of two stopwords", () => {
+    const m2 = trainModel("What is the capital? The capital is Agra. What is the river? The river is the Indus.");
+    const { text, seededFrom } = generate(m2, "What is the capital of the empire", { seed: 0 });
+    expect(seededFrom).toBe("question");
+    expect(text.toLowerCase().startsWith("what is")).toBe(false);
+    expect(text.toLowerCase().startsWith("the capital")).toBe(true);   // "the capital" (score 1) beats "what is" (score 0); no content+content pair exists here
+  });
+  it("falls back to a stopword+content pair before a lone word", () => {
+    const { text, seededFrom } = generate(m, "Tell me about the coast", { seed: 0 });
+    expect(seededFrom).toBe("question");
+    expect(text.toLowerCase().startsWith("the coast")).toBe(true);
   });
 });
 
