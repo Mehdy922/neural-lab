@@ -36,11 +36,21 @@ async function joinRoom(pg, name) {
   await pg.getByRole("button", { name: /Join/ }).click();
   await pg.getByRole("heading", { name: /Teams/ }).waitFor({ timeout: 20000 });
 }
-// Scroll the window so `locator` sits `top` CSS px below the viewport's top edge (clamped by the page end).
-async function scrollSo(pg, locator, top) {
+// boundingBox() is null for a detached or invisible element: fail loudly, naming the locator.
+async function boxOf(locator) {
   const box = await locator.boundingBox();
-  await pg.evaluate((dy) => window.scrollBy(0, dy), box.y - top);
-  await pg.waitForTimeout(300);
+  if (!box) throw new Error(`No bounding box for ${locator}`);
+  return box;
+}
+// Full-width capture clipped to the card(s) at `locators` (their union, plus `pad` px above and below),
+// so a shot holds exactly one card — or a span of cards — with no sliced neighbours. Cards sit 20 px apart
+// with a 6 px hard shadow below, so 12 px keeps the shot card's shadow and stays clear of the one above.
+async function shootBlock(pg, locators, path, pad = 12) {
+  await pg.evaluate(() => window.scrollTo(0, 0));   // page coordinates == viewport coordinates for the boxes below
+  await pg.waitForTimeout(200);
+  const boxes = await Promise.all([locators].flat().map(boxOf));
+  const y = Math.min(...boxes.map((b) => b.y)), bottom = Math.max(...boxes.map((b) => b.y + b.height));
+  await pg.screenshot({ path, fullPage: true, clip: { x: 0, y: Math.max(0, y - pad), width: pg.viewportSize().width, height: bottom - y + 2 * pad } });
 }
 
 // ── activity 2: "Talk to the machine" ────────────────────────────────────
@@ -68,16 +78,17 @@ async function shootActivity2() {
   await topics.getByRole("button", { name: /History/ }).click();
   await page.getByRole("textbox", { name: "Your question" }).fill(QUESTION);
   const typing = page.getByText(/is typing/);
+  const rightBtn = page.getByRole("button", { name: /Right/ });   // only the latest answer carries a vote row
+  // The bot bubble is the vote row's parent. Its text reads "🤖 HistoryBot" / the answer / the coverage
+  // line / the vote buttons — keep the answer line(s) only, whatever element the answer is wrapped in.
+  const STOP = /^(Recognised \d+ of \d+ words|It recognised none of your words|👍|👎|🤪|↺)/;
   const awaitAnswer = async () => {
     await typing.waitFor({ timeout: 5000 });
     await typing.waitFor({ state: "detached", timeout: 5000 });
-    await page.getByRole("button", { name: /Right/ }).waitFor({ timeout: 5000 });
-    // The answer is the bare text node of the last bot bubble (after the "🤖 HistoryBot" line).
-    return page.evaluate((who) => {
-      const whos = [...document.querySelectorAll("div")].filter((d) => d.textContent.trim() === who);
-      const bubble = whos.at(-1)?.parentElement;
-      return bubble ? [...bubble.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join("").trim() : "";
-    }, "🤖 HistoryBot");
+    await rightBtn.waitFor({ timeout: 5000 });
+    const lines = (await rightBtn.locator("xpath=../..").innerText()).split("\n").map((s) => s.trim()).filter((l) => l && !/^🤖\s/.test(l));
+    const end = lines.findIndex((l) => STOP.test(l));
+    return lines.slice(0, end === -1 ? undefined : end).join(" ");
   };
   await page.getByRole("button", { name: /^Ask$/ }).click();
   let answer = await awaitAnswer();
@@ -86,14 +97,14 @@ async function shootActivity2() {
     await page.getByRole("button", { name: /Ask again/ }).click();
     answer = await awaitAnswer();
   }
+  if (!answer || !isProjectorSafe(answer)) throw new Error(`HistoryBot answer unusable after retries: ${JSON.stringify(answer)}`);
   log(`HistoryBot said: "${answer}"`);
-  await page.getByRole("button", { name: /Right/ }).click();
+  await rightBtn.click();
   await page.getByRole("button", { name: /Right/, disabled: true }).waitFor({ timeout: 5000 });
   await page.waitForTimeout(500);
   await page.locator(".nl-pop").waitFor({ state: "detached", timeout: 5000 });   // let the "Joined …!" toast go
-  // Frame the whole HistoryBot card: heading, mission, topic chips, question, answer, coverage line, vote.
-  await scrollSo(page, page.getByRole("heading", { name: /HistoryBot/ }), 16);
-  await page.screenshot({ path: `${OUT}/a2-chat-phone.png`, fullPage: false });
+  // The whole HistoryBot card: heading, mission, topic chips, question, answer, coverage line, vote.
+  await shootBlock(page, page.getByRole("heading", { name: /HistoryBot/ }).locator("xpath=.."), `${OUT}/a2-chat-phone.png`);
 
   // Train your bot: tick Cricket, train, show the trained state.
   log("Train your bot (phone)");
@@ -104,8 +115,11 @@ async function shootActivity2() {
   await page.getByRole("button", { name: /Train my bot/ }).click();
   await page.getByPlaceholder("Test your bot…").waitFor({ timeout: 15000 });
   await page.waitForTimeout(400);
-  await scrollSo(page, page.getByRole("button", { name: /^Cricket/ }), 8);
-  await page.screenshot({ path: `${OUT}/a2-trainbot-phone.png`, fullPage: false });
+  // Both cards in one frame: heading and the ticked Cricket starter through the Train button, then the trained "Try it" card.
+  await shootBlock(page, [
+    page.getByRole("heading", { name: /Train your bot/ }).locator("xpath=.."),
+    page.getByRole("heading", { name: "Try it" }).locator("xpath=.."),
+  ], `${OUT}/a2-trainbot-phone.png`);
   await phone.close();
 
   // Projector: a student-role desktop window (the teacher's tabs need the bot-teacher's browser).
@@ -120,25 +134,27 @@ async function shootActivity2() {
   await nonsense.waitFor({ timeout: 10000 });
   await p2.waitForTimeout(800);
   // Headline, bars and "Nonsense of the day" in one frame: clip taller than the viewport if they do not fit.
-  const nb = await nonsense.boundingBox();
+  const nb = await boxOf(nonsense);
   const bottom = Math.ceil(nb.y + nb.height + 16);
   if (bottom > 800) log(`scoreboard runs to ${bottom} px — clipping past the 800 px viewport`);
   await p2.screenshot({ path: `${OUT}/a2-scoreboard.png`, fullPage: bottom > 800, ...(bottom > 800 ? { clip: { x: 0, y: 0, width: 1280, height: bottom } } : {}) });
 
   log("corpus (projector)");
   await p2.getByRole("button", { name: "Show me everything it has ever read" }).click();
+  const hideBtn = p2.getByRole("button", { name: "Hide what it has read" });
   const marks = p2.locator("mark");
   await marks.first().waitFor({ timeout: 10000 });
-  log(`${await marks.count()} highlighted words in the corpus`);
-  await marks.first().scrollIntoViewIfNeeded();          // scrolls the corpus box so a highlight is on screen
-  await scrollSo(p2, p2.getByRole("button", { name: "Hide what it has read" }), 24);
-  await p2.screenshot({ path: `${OUT}/a2-corpus.png`, fullPage: false });
+  // Scroll the corpus box to a highlight that visibly ties to the question ("Taj"/"Mahal"), not just to "built".
+  const tied = marks.filter({ hasText: /taj|mahal/i });
+  if ((await tied.count()) === 0) throw new Error(`corpus has ${await marks.count()} highlights but none for Taj/Mahal — is the latest vote still "${QUESTION}"?`);
+  log(`${await marks.count()} highlighted words in the corpus, ${await tied.count()} of them Taj/Mahal`);
+  await tied.first().scrollIntoViewIfNeeded();           // scrolls the 420 px corpus box
+  await shootBlock(p2, hideBtn.locator("xpath=.."), `${OUT}/a2-corpus.png`);   // the corpus card only
 
   log("cross-examination strips (projector)");
-  await p2.getByRole("button", { name: "Hide what it has read" }).click();
+  await hideBtn.click();
   await p2.getByRole("table", { name: "Bot leaderboard" }).waitFor({ timeout: 20000 });
-  await scrollSo(p2, p2.getByRole("heading", { name: /Cross-examination/ }), 24);
-  await p2.screenshot({ path: `${OUT}/a2-exam-strips.png`, fullPage: false });
+  await shootBlock(p2, p2.getByRole("heading", { name: /Cross-examination/ }).locator("xpath=.."), `${OUT}/a2-exam-strips.png`);   // the block only
 
   log("lobby (projector)");
   await p2.getByRole("tab", { name: /Lobby/ }).click();
