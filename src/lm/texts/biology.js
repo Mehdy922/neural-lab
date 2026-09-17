@@ -1,0 +1,20 @@
+export default {
+  id: "biology",
+  title: "The living body",
+  emoji: "🧬",
+  text: `Every living thing is built from tiny units called cells. Some simple living things are only a single cell. Your body holds trillions of cells working together every day. Most cells are far too small to see without a microscope. Each cell has a thin outer skin called a membrane. The membrane holds the cell together and controls what moves in and out. Inside many cells sits a control center called the nucleus. The nucleus stores long threads of a special molecule called DNA. DNA carries the instructions that tell a cell how to grow. Every cell in your body holds a nearly complete copy of your DNA. Parents pass their DNA down to their children at birth. That is why children often look a little like their parents.
+
+Cells group together to form tissues, and tissues form organs. An organ is a body part with a clear job to do. Your heart, lungs, stomach and skin are all organs. The heart is a strong muscle that never stops working while you live. It squeezes again and again to push blood around your body. Blood carries oxygen, food and other useful things to every cell. Blood also carries away waste that cells no longer need. Blood travels through a long network of tubes called blood vessels. A doctor can check your pulse where a blood vessel sits near the skin.
+
+Your lungs work closely with your heart and blood. When you breathe in, air travels down your throat into your lungs. Your lungs pull oxygen out of that air and pass it to your blood. At the same time your lungs remove a waste gas called carbon dioxide. You breathe out to send that waste gas back into the air. Runners breathe faster because their muscles need more oxygen quickly.
+
+Food gives your body the energy it needs to move and grow. Digestion is the process that breaks food down into useful pieces. Digestion starts in your mouth, where teeth crush food and mix it with saliva. The food then travels down a tube into your stomach. Your stomach uses strong juices to break the food down further. From the stomach, food moves into a long tube called the small intestine. There, tiny useful pieces of food pass into your blood. Whatever your body cannot use travels on and leaves as waste.
+
+Bones give your body its shape and protect softer parts inside. Your skull protects your brain, and your ribs protect your lungs. Bones also work with muscles to let you move. Muscles are bundles of fibers that can pull and relax. When a muscle pulls, it moves the bone it is joined to. Your arms and legs bend because pairs of muscles pull against each other. Strong bones and muscles let you run, jump, and lift heavy things.
+
+Plants are living things too, but they build their own food. Plants use sunlight, water and a gas called carbon dioxide to make food. This process is called photosynthesis, and it happens inside a plant's leaves. Tiny green parts inside plant cells catch sunlight during photosynthesis. Photosynthesis also releases oxygen, which humans and animals then breathe in. Without plants and photosynthesis, animals would soon run out of clean air. Roots pull water and useful minerals up from the soil into the plant. Leaves spread wide to catch as much sunlight as possible.
+
+Not every living thing is a plant or an animal. Bacteria are extremely tiny living things made of just one simple cell. You cannot see a single bacterium without a strong microscope. Bacteria live almost everywhere, including soil, water and inside your body. Many bacteria are harmless, and some even help your digestion. A few kinds of bacteria can cause illness if they grow out of control. Doctors sometimes use medicine to fight harmful bacteria in a sick patient. Washing your hands often helps stop harmful bacteria from spreading between people.
+
+Every part of the body depends on the others to work well. Cells build tissues, tissues build organs, and organs build whole systems. Your heart, lungs, stomach and brain all work together every single second. Scientists still study cells and DNA to understand life more deeply. Learning how your body works can help you keep it healthy.`,
+};
