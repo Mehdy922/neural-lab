@@ -12,7 +12,8 @@
     "test:rules": "firebase emulators:exec --only database --project demo-neural-lab \"vitest run --config vitest.rules.config.js\"",
     "simulate": "node scripts/simulate.mjs",
     "screenshots": "node scripts/screenshots.mjs",
-    "slides": "node slides/build.mjs"
+    "slides": "node slides/build.mjs",
+    "slides:2": "node slides/build-lesson2.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",

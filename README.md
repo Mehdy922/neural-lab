@@ -110,14 +110,30 @@ npm run simulate -- --activity 2 --students 10 --max-teams 4 --hold 300
 
 ## The lesson slides
 
-`slides/Neural-Lab-Lesson.pptx` is a 30–40 minute lesson for grades 9–12 that runs *before* the activity
-("How does a machine learn?"), with speaker notes and timings on every slide. Slides 1–14 are the lesson and
-end by launching the activity; slides 15–19 are the debrief, to be shown only after the tournament reveal.
-It uses fonts that ship with Windows and Office, so it opens the same on the school PC.
+Two decks, one per lesson, both generated from the app's palette and the screenshots in `slides/img/`, with
+speaker notes and timings on every slide. They use fonts that ship with Windows and Office, so they open the
+same on the school PC.
 
-The deck is generated (`npm run slides`) from `slides/build.mjs` using the app's palette and screenshots in
-`slides/img/`. To refresh the screenshots: `npm run simulate -- --rounds 2 --hold 600`, note the room code it
-prints, then `npm run screenshots -- --room CODE` while the room is open.
+- `slides/Neural-Lab-Lesson.pptx` — Lesson 1, "How does a machine learn?", a 30–40 minute lesson for grades
+  9–12 that runs *before* the activity. Slides 1–16 are the lesson and end by launching the activity; slides
+  17–21 are the debrief, opening with a STOP divider and shown only after the tournament reveal. Built with
+  `npm run slides` from `slides/build.mjs`.
+- `slides/Neural-Lab-Lesson-2.pptx` — Lesson 2, "Talk to the machine", 40 minutes. Slides 1–4 are the
+  briefing (recap, the chat script, join); slide 5 is the STOP divider that holds while HistoryBot is being
+  questioned; slides 6–9 are shown after the scoreboard is revealed (what happened, its whole 2,000-word mind
+  on one screen, how it works, nonsense of the day); slide 10 briefs Part 2; slides 11–12 are the
+  cross-examination debrief and the wrap with the exit ticket. Built with `npm run slides:2` from
+  `slides/build-lesson2.mjs`.
+
+Both build scripts share `slides/lib.mjs` (theme, slide master, drawing helpers). To refresh the screenshots,
+run a simulated room, note the room code it prints, then capture while the room is still open:
+
+```bash
+npm run simulate -- --rounds 2 --hold 600                                 # an Activity 1 room
+npm run screenshots -- --room CODE
+npm run simulate -- --activity 2 --students 12 --max-teams 4 --hold 600   # an Activity 2 room
+npm run screenshots -- --activity 2 --room CODE
+```
 
 ## Development
 
