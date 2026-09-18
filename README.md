@@ -116,8 +116,8 @@ same on the school PC.
 
 - `slides/Neural-Lab-Lesson.pptx` — Lesson 1, "How does a machine learn?", a 30–40 minute lesson for grades
   9–12 that runs *before* the activity. Slides 1–16 are the lesson and end by launching the activity; slides
-  17–21 are the debrief, opening with a STOP divider and shown only after the tournament reveal. Built with
-  `npm run slides` from `slides/build.mjs`.
+  17–21 are the debrief, opening with a hold divider ("Appendix · use after the tournament — The debrief.") and
+  shown only after the tournament reveal. Built with `npm run slides` from `slides/build.mjs`.
 - `slides/Neural-Lab-Lesson-2.pptx` — Lesson 2, "Talk to the machine", 40 minutes. Slides 1–4 are the
   briefing (recap, the chat script, join); slide 5 is the STOP divider that holds while HistoryBot is being
   questioned; slides 6–9 are shown after the scoreboard is revealed (what happened, its whole 2,000-word mind

@@ -5,7 +5,7 @@
 //   npm run slides:2        (expects screenshots in slides/img/ — see scripts/screenshots.mjs)
 
 import history from "../src/lm/texts/history.js";
-import { C, DISP, SANS, W, H, M, makePptx, title, sub, card, badge, body, big, bullets, pixelArt, art, img, arrow } from "./lib.mjs";
+import { C, DISP, SANS, W, H, M, makePptx, title, sub, card, badge, body, pixelArt, art, img, arrow } from "./lib.mjs";
 
 const { pptx, slide } = makePptx({ title: "Talk to the machine" });
 
@@ -19,7 +19,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 // ═════════════════════════════════════════════════════════════════════════
 // 1 · Title
 {
-  const s = slide("1 min. Recap in one line: last time your machine scored 100% on your own drawings and dropped on everyone else's, because a machine only knows what it was shown. Today the machine talks instead of looking, and the same thing is going to happen. Keep the energy up; the payoff is the moment the scoreboard is revealed.");
+  const s = slide("1 min for this slide and the next. Recap in one line: last time your machine scored 100% on your own drawings and dropped on everyone else's, because a machine only knows what it was shown. Today the machine talks instead of looking, and the same thing is going to happen. Keep the energy up; the payoff is the moment the scoreboard is revealed.");
   badge(s, "LESSON 2 · TALK TO THE MACHINE", M, 0.5, C.sun, C.ink, 3.1);
   badge(s, "GRADES 9–12 · 40 MIN", M + 3.25, 0.5, C.paper, C.muted, 2.2);
   s.addText("Last time it saw.\nThis time it talks.", { x: M, y: 1.0, w: 6.2, h: 1.6, fontFace: DISP, fontSize: 42, bold: true, color: C.ink, valign: "middle" });
@@ -35,7 +35,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 2 · Recap
 {
-  const s = slide("2 min. Ask what they remember from last time. Let them say it: 100% on their own drawings, then the drop on everyone else's, because it had only ever seen their pencils. Do not explain further. This lesson makes the same point with words instead of drawings, and it only lands if they get there themselves.");
+  const s = slide("Part of the same minute. Ask what they remember from last time. Let them say it: 100% on their own drawings, then the drop on everyone else's, because it had only ever seen their pencils. Do not explain further. This lesson makes the same point with words instead of drawings, and it only lands if they get there themselves.");
   title(s, "Same machines, different pencils.");
   sub(s, "What do you remember?", 1.15);
   const h = 3.2, w = h * (2560 / 1600);   // tournament-projector.png is 2560×1600
@@ -44,7 +44,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 3 · Briefing
 {
-  const s = slide("3 min. Read the script on the left aloud, slowly. It is the whole briefing. Then the mission. Each verdict is a report on the bot, not a vote for it; say that twice. Do not explain how the bot works or why it might be wrong. They find that out themselves in the next ten minutes.");
+  const s = slide("2 min. Read the script on the left aloud, slowly. It is the whole briefing. Then the mission. Each verdict is a report on the bot, not a vote for it; say that twice. Do not explain how the bot works or why it might be wrong. They find that out themselves in the next ten minutes.");
   title(s, "The briefing.");
   card(s, M, 1.35, 5.3, 3.4);
   body(s, "“There is a bot on your phone. It has read exactly one thing in its life. Ask it anything. Tag the topic, read the answer, then tell me: right, wrong, or nonsense. Be honest — this is a report on it, not a vote for it.”", M + 0.3, 1.6, 4.7, 3.0, { fontSize: 20 });
@@ -79,7 +79,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // ── STOP: HistoryBot is being questioned ─────────────────────────────────
 {
-  const s = slide("About 10 min of chatting. Do not show anything past this point until you have pressed Reveal scoreboard and the room has read the bars. Walk the room; nudge teams towards questions off the history topic. The collapse only lands if they see it before anyone explains it.");
+  const s = slide("About 8 min of chatting. Do not show anything past this point until you have pressed Reveal scoreboard and the room has read the bars. Walk the room; nudge teams towards questions off the history topic. The collapse only lands if they see it before anyone explains it.");
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 0.09, w: W, h: H - 0.09, fill: { color: C.ink }, line: { color: C.ink, width: 0 } });
   s.addText("STOP", { x: M, y: 1.4, w: W - 2 * M, h: 0.5, fontFace: SANS, fontSize: 14, bold: true, color: C.sun, align: "center" });
   s.addText("Do not go past this until the scoreboard is revealed.", { x: M, y: 1.9, w: W - 2 * M, h: 1.6, fontFace: DISP, fontSize: 40, bold: true, color: C.paper, align: "center", valign: "middle" });
@@ -88,7 +88,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 6 · What just happened
 {
-  const s = slide("3 min. Let them read the bars first. Every question got a full-sentence answer; only the history ones were right. Ask the question on the right. Take three answers from the room and agree with none of them: nod, thank them, move on. The next slide is the answer.");
+  const s = slide("2 min. Let them read the bars first. Every question got a full-sentence answer: right on history, mostly wrong on everything else. Ask the question on the right. Take three answers from the room and agree with none of them: nod, thank them, move on. The next two slides are the answer.");
   title(s, "What just happened?", { h: 0.8 });
   const ih = 3.65, iw = ih * (2560 / 2056);   // a2-scoreboard.png is 2560×2056
   img(s, "a2-scoreboard.png", M, 1.3, iw, ih);
@@ -108,13 +108,14 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 7 · This is its whole mind (the corpus, laid out natively)
 {
-  const s = slide("3 min. Everything HistoryBot has ever read is on this screen: about 2,000 words, nothing else. Highlighted: the words from 'Who built the Taj Mahal?' that it recognised. Say: 'Find the sentence yours came from.' Give them a minute on their phones (HistoryBot tab → Show me everything it has ever read), then take one right answer and one nonsense answer from the room and find both on this screen. Every answer it gave is in here.");
+  const s = slide("3 min. Everything HistoryBot has ever read is on this screen: about 2,000 words, nothing else. Highlighted: the words from 'Who built the Taj Mahal?' that it recognised. Say: 'Find the sentence yours came from.' Give them a minute on their phones (HistoryBot tab → Show me everything it has ever read). Every word it said is in here. Take one answer from the room and find the pieces it was stitched from.");
   s.addText("This is its whole mind.", { x: M, y: 0.2, w: 5.4, h: 0.5, fontFace: DISP, fontSize: 26, bold: true, color: C.ink, valign: "middle" });
   s.addText("Highlighted: the words from “Who built the Taj Mahal?” it recognised.", { x: M, y: 0.66, w: 5.6, h: 0.28, fontFace: SANS, fontSize: 10.5, color: C.muted, valign: "top" });
   s.addText([
+    { text: "On the phone:", options: { italic: false, breakLine: true } },
     { text: "“Recognised 1 of 7 words in your question.”", options: { breakLine: true } },
     { text: "“It recognised none of your words. It answered anyway.”" },
-  ], { x: 5.9, y: 0.28, w: 3.75, h: 0.62, fontFace: SANS, fontSize: 10.5, italic: true, color: C.muted, align: "right", valign: "middle", paraSpaceAfter: 2 });
+  ], { x: 5.9, y: 0.2, w: 3.75, h: 0.76, fontFace: SANS, fontSize: 10.5, italic: true, color: C.muted, align: "right", valign: "middle", paraSpaceAfter: 1 });
 
   // Five equal columns of tiny Calibri. 7 pt needs about 7 in of column on a 5.6 in slide, so the
   // whole text only fits at 5 pt; the point is that it all fits on one screen, and it stays legible
@@ -161,7 +162,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 8 · How it works
 {
-  const s = slide("3 min. Only now say 'next word'. It read the 2,000 words and counted which word tends to follow which. To answer, it starts from the words in your question that it recognised and picks the most likely next word, then the next, until a full stop. Nothing in there checks whether the sentence is true. It cannot say 'I don't know' because it has no idea what knowing is; it only ever has a next word. Very sure and still wrong: the same lesson as the confidence bar last time. Keep the vocabulary to 'word' and 'bot'.");
+  const s = slide("2 min. Only now say 'next word'. It read the 2,000 words and counted which word tends to follow which. To answer, it starts from the words in your question that it recognised and picks the most likely next word, then the next, until a full stop. Nothing in there checks whether the sentence is true. It cannot say 'I don't know' because it has no idea what knowing is; it only ever has a next word. Very sure and still wrong: the same lesson as the confidence bar last time. Keep the vocabulary to 'word' and 'bot'.");
   title(s, "How it works.");
   const steps = [["📖", "READ", "Count which word follows which."], ["🎯", "PICK", "The most likely next word."], ["🔁", "REPEAT", "One word at a time, until a full stop."]];
   steps.forEach(([e, h, t], i) => {
@@ -191,7 +192,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 10 · Part 2 briefing
 {
-  const s = slide("2 min briefing, then 6 to 8 min of training. Each team picks what its bot reads: one of the starter texts, or a paragraph they paste themselves. Everything they tick is the whole of what it will ever know; nothing else exists for it. Try it before sending: ask about its topic, then about something else, and watch the second answer. One phone per team sends, and sending again replaces the bot, so agree first. Press Open cross-examination when every team's bot is in.");
+  const s = slide("2 min briefing, then 6 min of training. Each team picks what its bot reads: one of the starter texts, or a paragraph they paste themselves. Everything they tick is the whole of what it will ever know; nothing else exists for it. Try it before sending: ask about its topic, then about something else, and watch the second answer. One phone per team sends, and sending again replaces the bot, so agree first. Press Open cross-examination when every team's bot is in.");
   title(s, "Part 2 · Train your bot.");
   const ih = 3.55, iw = ih * (780 / 2486);   // a2-trainbot-phone.png is 780×2486
   img(s, "a2-trainbot-phone.png", M + 0.2, 1.3, iw, ih);
@@ -209,7 +210,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 11 · Cross-examination debrief
 {
-  const s = slide("About 5 min of cross-examining, then 3 min here. Every bot is now questioned by strangers, so the Own team column is a dash: only strangers' votes count, the same rule as the tournament last time. Look at the strips. Each bot is right in exactly one topic, the one it read, and wrong everywhere else. Ask every team: where is your bot's bump? Then: what did it read? Same answer, every time.");
+  const s = slide("5 min of cross-examining, then 2 min here. Every bot is now questioned by strangers, so the Own team column is a dash: only strangers' votes count, the same rule as the tournament last time. Look at the strips. The bots that scored have their bump in exactly one topic — the one they read. A bot with no bump was asked nothing it had read. Ask every team with a bump: where is it? Then: what did it read? Same answer, every time.");
   title(s, "Cross-examination.");
   const iw = 7.6, ih = iw / (2560 / 856);   // a2-exam-strips.png is 2560×856
   img(s, "a2-exam-strips.png", (W - iw) / 2, 1.3, iw, ih);
