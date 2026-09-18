@@ -1,10 +1,11 @@
 # Neural Lab
 
-Two 40-minute lessons on what a machine really learns. Lesson 1 · Teach the machine: teams draw two things, train a tiny neural network, and watch their ~100% collapse on other teams' drawings. Lesson 2 · Talk to the machine: everyone questions HistoryBot, a bot that has read one 2,000-word text, votes on its answers, then trains and cross-examines bots of their own. Both run in the browser on phones; the teacher projects one tab.
+Two classroom lessons on what a machine really learns. Lesson 1 · Teach the machine: teams draw two things, train a tiny neural network, and watch their ~100% collapse on other teams' drawings. Lesson 2 · Talk to the machine: everyone questions HistoryBot, a bot that has read one 2,000-word text, votes on its answers, then trains and cross-examines bots of their own. Both run in the browser on phones; the teacher projects one tab.
 
 A lesson is a slide deck plus an activity in the app. The decks are in `slides/` (see **The lesson slides**
 below); the activities are in the app, one room per class, and run as described under **Running Lesson 1**
-and **Running Lesson 2**.
+and **Running Lesson 2**. Lesson 1 needs a deck period and then an activity period (plus another if you
+run the bendy fence); Lesson 2 runs as one 40-minute period, with its slides interleaved with the activity.
 
 Live: https://mehdy922.github.io/neural-lab/
 
@@ -38,10 +39,10 @@ Troubleshooting:
 
 ## Running Lesson 1 · Teach the machine
 
-1. Open the live URL → choose **1 · Teach the machine** → **Teacher** → set the pair (default Mango vs Cricket ball; try Sun vs Flower), max students per team, and optionally a max number of teams (2–20; blank = no limit) → **Create room**. Teams don't need to be full: a team of 2 and a team of 4 both count. All of these can be changed later in **Settings**.
+1. Open the live URL → choose **Activity 1 · Teach the machine** → **Teacher** → set the pair (default Mango vs Cricket ball; try Sun vs Flower), max students per team, and optionally a max number of teams (2–20; blank = no limit) → **Create room**. Teams don't need to be full: a team of 2 and a team of 4 both count. All of these can be changed later in **Settings**.
 2. Put the Lobby on the projector: room code + QR.
 3. Students: scan the QR (it skips straight to the join form) or open the URL → any activity card → **Student** → code + name. The room decides the activity, not the student's pick. Then they make a team or tap one to join it. If someone is stuck in a team: Lobby → move a student between teams.
-4. Press **Start teaching**. Students draw 5 of each (4 at least), **Train**, test with **What is it?**, then **Send my machine to the class**.
+4. Press **Start teaching**. Each team draws 5 mangoes and 5 cricket balls between them, everyone taking a turn (the drawings live on the one phone that trains, which needs at least 4 of each), then **Train**, test with **What is it?**, and **Send my machine to the class**.
 5. Press **Reveal tournament**. Open the Tournament tab on the projector. Wait for the noise. If the class is hooked, **Next round**: teams add drawings, retrain and send again, and the next reveal shows each team's change.
 6. Second period: **Open bendy fence**.
 
@@ -49,7 +50,7 @@ Teacher tips, run sheet, the read-aloud script and the one rule are in the **Set
 
 ## Running Lesson 2 · Talk to the machine
 
-1. On the first screen, choose **2 · Talk to the machine** → **Teacher** → **Create room** (no drawing pair this time; team size and max teams as in Lesson 1).
+1. On the first screen, choose **Activity 2 · Talk to the machine** → **Teacher** → **Create room** (no drawing pair this time; team size and max teams as in Lesson 1).
 2. Students join and form teams exactly as in Lesson 1 — any activity card leads to the same join form; the room decides.
 3. Press **Start chatting**. Students ask HistoryBot anything and vote Right / Wrong / Nonsense on its answer.
    They'll see: *"HistoryBot has read one thing in its life: 2,000 words about South Asian history. Ask it anything."*
@@ -74,7 +75,7 @@ The Settings tab carries a run sheet and a read-aloud teacher script for every p
 Because this activity adds `votes`, `bots` and `botVotes` to `database.rules.json`, any already-deployed
 project's live rules must be republished (setup step 4) before running Lesson 2 for real.
 
-### Room controls (both lessons)
+## Room controls (both lessons)
 
 - One phone sends per team — the machine in Lesson 1, the bot in Lesson 2. Sending again replaces what the
   team sent; the Teach it / Train your bot tab says who sent the current one.

@@ -5,11 +5,22 @@
 //
 // Activity 1 needs a room that is already in the "fence" phase with a team that has space
 // (e.g. one produced by `npm run simulate -- --students 12 --max-teams 4 --rounds 2 --hold 600`).
-// Produces: teach-drawing.png, teach-guess.png, teach-trained.png, lobby.png, tournament-phone.png, tournament-projector.png
+// Produces: teach-drawing.png, teach-guess.png, teach-trained.png, teach-full.png, lobby.png,
+// tournament-phone.png, tournament-projector.png.
+// The Lesson 1 deck places teach-drawing, teach-guess, teach-trained, lobby and tournament-projector;
+// teach-full.png and tournament-phone.png are whole-page reference shots that no slide uses.
 //
 // Activity 2 needs a room in the "exam" phase with ≥ 10 votes and a team that has space
 // (e.g. `npm run simulate -- --activity 2 --students 12 --max-teams 4 --hold 600`).
-// Produces: a2-chat-phone.png, a2-trainbot-phone.png, a2-scoreboard.png, a2-corpus.png, a2-exam-strips.png, a2-lobby.png
+// Produces: a2-chat-phone.png, a2-trainbot-phone.png, a2-scoreboard.png, a2-corpus.png,
+// a2-exam-strips.png, a2-lobby.png.
+// The Lesson 2 deck places a2-trainbot-phone, a2-scoreboard, a2-exam-strips and a2-lobby.
+// a2-chat-phone.png and a2-corpus.png are committed but used by neither deck — the corpus slide draws
+// the text natively from src/lm/texts/history.js — so they stay here as reference shots, not as dead files.
+//
+// tournament-projector-r1.png (the Round 1 board, "100% → 51%") is used by BOTH decks and is not part of a
+// plain run: capture it from a room that is still on round 1 with
+//   node scripts/screenshots.mjs --room CODE --projector-only --projector-file tournament-projector-r1.png
 
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
@@ -209,7 +220,7 @@ const canvas = page.locator('canvas[aria-label="Drawing canvas"]');
 await canvas.waitFor();
 
 async function stroke(points) {
-  const box = await canvas.boundingBox();
+  const box = await boxOf(canvas);
   const P = points.map(([u, v]) => [box.x + u * box.width, box.y + v * box.height]);
   await page.mouse.move(P[0][0], P[0][1]);
   await page.mouse.down();

@@ -38,8 +38,8 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
   const s = slide("Part of the same minute. Ask what they remember from last time. Let them say it: 100% on their own drawings, then the drop on everyone else's, because it had only ever seen their pencils. Do not explain further. This lesson makes the same point with words instead of drawings, and it only lands if they get there themselves.");
   title(s, "Same machines, different pencils.");
   sub(s, "What do you remember?", 1.15);
-  const h = 3.2, w = h * (2560 / 1600);   // tournament-projector.png is 2560×1600
-  img(s, "tournament-projector.png", (W - w) / 2, 1.7, w, h);
+  const h = 3.2, w = h * (2560 / 1600);   // tournament-projector-r1.png is 2560×1600
+  img(s, "tournament-projector-r1.png", (W - w) / 2, 1.7, w, h);
 }
 
 // 3 · Briefing
@@ -67,7 +67,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
   s.addText("— on the projector —", { x: M, y: 2.6, w: cw, h: 1.0, fontFace: DISP, fontSize: 28, bold: true, color: C.ink, align: "center", valign: "middle" });
   const iw = 3.3, ih = iw / (2560 / 1600);   // a2-lobby.png is 2560×1600
   img(s, "a2-lobby.png", 6.2, 1.4, iw, ih);
-  body(s, "the Lobby, as the projector shows it", 6.2, 1.4 + ih + 0.08, iw, 0.3, { fontSize: 11, color: C.muted, align: "center" });
+  body(s, "the Lobby's team list, as students see it", 6.2, 1.4 + ih + 0.08, iw, 0.3, { fontSize: 11, color: C.muted, align: "center" });
   sub(s, [
     { text: "Scan the QR, or open the link → " },
     { text: "Activity 2 · Talk to the machine", options: { bold: true } },
@@ -88,7 +88,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 6 · What just happened
 {
-  const s = slide("2 min. Let them read the bars first. Every question got a full-sentence answer: right on history, mostly wrong on everything else. Ask the question on the right. Take three answers from the room and agree with none of them: nod, thank them, move on. The next two slides are the answer.");
+  const s = slide("1 min. Let them read the bars first. Every question got a full-sentence answer: right on history, mostly wrong on everything else. Ask the question on the right. Take three answers from the room and agree with none of them: nod, thank them, move on. The next two slides are the answer.");
   title(s, "What just happened?", { h: 0.8 });
   const ih = 3.65, iw = ih * (2560 / 2056);   // a2-scoreboard.png is 2560×2056
   img(s, "a2-scoreboard.png", M, 1.3, iw, ih);
@@ -113,7 +113,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
   s.addText("Highlighted: the words from “Who built the Taj Mahal?” it recognised.", { x: M, y: 0.66, w: 5.6, h: 0.28, fontFace: SANS, fontSize: 10.5, color: C.muted, valign: "top" });
   s.addText([
     { text: "On the phone:", options: { italic: false, breakLine: true } },
-    { text: "“Recognised 1 of 7 words in your question.”", options: { breakLine: true } },
+    { text: "“Recognised 3 of 5 words in your question.”", options: { breakLine: true } },
     { text: "“It recognised none of your words. It answered anyway.”" },
   ], { x: 5.9, y: 0.2, w: 3.75, h: 0.76, fontFace: SANS, fontSize: 10.5, italic: true, color: C.muted, align: "right", valign: "middle", paraSpaceAfter: 1 });
 
@@ -210,7 +210,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 11 · Cross-examination debrief
 {
-  const s = slide("5 min of cross-examining, then 2 min here. Every bot is now questioned by strangers, so the Own team column is a dash: only strangers' votes count, the same rule as the tournament last time. Look at the strips. The bots that scored have their bump in exactly one topic — the one they read. A bot with no bump was asked nothing it had read. Ask every team with a bump: where is it? Then: what did it read? Same answer, every time.");
+  const s = slide("8 min of cross-examining, then 2 min here. Every bot is now questioned by strangers, so the Own team column is a dash: only strangers' votes count, the same rule as the tournament last time. Look at the strips. The bots that scored have their bump in exactly one topic — the one they read. Two strips here are flat: those bots were asked about things they had never read, and got them wrong — that is what the reds are. Ask every team with a bump: where is it? Then: what did it read? Same answer, every time.");
   title(s, "Cross-examination.");
   const iw = 7.6, ih = iw / (2560 / 856);   // a2-exam-strips.png is 2560×856
   img(s, "a2-exam-strips.png", (W - iw) / 2, 1.3, iw, ih);
@@ -221,7 +221,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
 
 // 12 · The big ones + exit
 {
-  const s = slide("3 min. The wrap, then the exit ticket: one line each, collect them. The big ones, the chatbots on their phones, work the same way, one word at a time, only they have read millions of times more, so the mistakes are rarer and much harder to spot. The question to leave in the room: what did it read, and who chose that?");
+  const s = slide("4 min. The wrap, then the exit ticket: one line each, collect them. The big ones, the chatbots on their phones, work the same way, one word at a time, only they have read millions of times more, so the mistakes are rarer and much harder to spot. The question to leave in the room: what did it read, and who chose that?");
   title(s, "The big ones.");
   card(s, M, 1.35, 5.5, 3.25);
   s.addText([
@@ -232,7 +232,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
   kicker(s, "EXIT TICKET", 6.5, 1.5, 2.8);
   s.addText("Name one thing you asked a chatbot this month. What might it have read to answer? Who chose that?", { x: 6.5, y: 1.85, w: 2.8, h: 2.2, fontFace: DISP, fontSize: 15, bold: true, color: C.ink, valign: "top" });
   body(s, "One line each.", 6.5, 4.1, 2.8, 0.4, { fontSize: 12, color: C.muted });
-  badge(s, "A MACHINE ONLY KNOWS WHAT IT WAS SHOWN", 2.25, 4.75, C.sun, C.ink, 5.5);
+  badge(s, "LAST LESSON: A MACHINE ONLY KNOWS WHAT IT WAS SHOWN", (W - 7.4) / 2, 4.75, C.sun, C.ink, 7.4);
 }
 
 const out = "slides/Neural-Lab-Lesson-2.pptx";

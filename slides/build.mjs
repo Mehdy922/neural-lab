@@ -9,6 +9,10 @@ import { C, DISP, SANS, W, H, M, makePptx, title, sub, card, badge, body, big, b
 
 const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
 
+// A small all-caps label for the corner of a card, in the deck's badge type.
+const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
+  s.addText(text, { x, y, w, h: 0.3, fontFace: SANS, fontSize: 10, bold: true, color, charSpacing: 1, align: "right" });
+
 // ═════════════════════════════════════════════════════════════════════════
 // 1 · Title
 {
@@ -106,6 +110,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   const mid = 2.45;
   // Left: a brain cell. Signals come in along the dendrites; the cell body sends one out along the axon.
   card(s, M, 1.35, 4.3, 2.55);
+  kicker(s, "A BRAIN CELL", 2.6, 1.43, 2.0);
   [1.65, 2.05, 2.45, 2.85, 3.25].forEach((y) => seg(0.85, y, 2.05, mid));
   seg(2.05, mid, 3.75, mid, 2.25);
   [[4.3, 2.0], [4.4, mid], [4.3, 2.9]].forEach(([x, y]) => { seg(3.75, mid, x, y); dot(x, y, 0.2, C.mango, C.mangoDeep); });
@@ -115,6 +120,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
   label("signal out", 3.6, 1.2);
   // Right: the maths copy. Three numbers in, one weighted sum, one number out.
   card(s, 5.2, 1.35, 4.3, 2.55, C.soft);
+  kicker(s, "THE COPY, 1943", 7.3, 1.43, 2.0, C.skyDeep);
   [1.85, mid, 3.05].forEach((y) => seg(5.85, y, 7.35, mid));
   seg(7.35, mid, 8.85, mid);
   [1.85, mid, 3.05].forEach((y) => dot(5.85, y, 0.34, C.ink, C.ink));
@@ -155,7 +161,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
 
 // 9 · Training
 {
-  const s = slide("4 min. Training is a loop. Show it one drawing. It guesses. Compare the guess with the label you gave. Nudge every knob a tiny bit in the direction that would have made the guess less wrong. Next drawing. Ten drawings, 240 laps, about one second on a phone. Don't use the word gradient. If someone asks how it knows which way to nudge: it tries the tiniest change and keeps the direction that helped.");
+  const s = slide("3 min. Training is a loop. Show it one drawing. It guesses. Compare the guess with the label you gave. Nudge every knob a tiny bit in the direction that would have made the guess less wrong. Next drawing. Ten drawings, 240 laps, about one second on a phone. Don't use the word gradient. If someone asks how it knows which way to nudge: it tries the tiniest change and keeps the direction that helped.");
   title(s, "Training = guess, check, nudge.");
   const steps = [["👀", "GUESS", "Show it one drawing. It says: “72% cricket ball.”"], ["✅", "CHECK", "You labelled it “mango”. So the guess was wrong by a lot."], ["🎛️", "NUDGE", "Turn every knob a tiny bit in the direction that would have made it less wrong."]];
   steps.forEach(([e, h, t], i) => {
@@ -187,7 +193,7 @@ const { pptx, slide } = makePptx({ title: "How does a machine learn?" });
 
 // 11 · What it looks like (screenshots)
 {
-  const s = slide("5 min. This is the app you will use in a few minutes. Left: a team drawing mangoes and cricket balls; each drawing added becomes one example in the training set at the bottom. Right: after Train, the score on their own drawings and a test with a fresh drawing. Walk through the buttons: Add this drawing, Train it, What is it?, Send my machine to the class.");
+  const s = slide("3 min. This is the app you will use in a few minutes. Left: a team drawing mangoes and cricket balls; each drawing added becomes one example under Your examples (the third shot). Right: after Train, the score on their own drawings and a test with a fresh drawing. Walk through the buttons: Add this drawing, Train it, What is it?, Send my machine to the class.");
   title(s, "What it looks like.");
   // Three shots of the same phone at one height; each width follows its PNG's own aspect ratio
   // (716 px wide by 1010 / 1246 / 1032 px tall) so nothing is stretched and the row sits level.
