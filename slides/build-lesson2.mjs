@@ -113,7 +113,7 @@ const kicker = (s, text, x, y, w, color = C.mangoDeep) =>
   s.addText("Highlighted: the words from “Who built the Taj Mahal?” it recognised.", { x: M, y: 0.66, w: 5.6, h: 0.28, fontFace: SANS, fontSize: 10.5, color: C.muted, valign: "top" });
   s.addText([
     { text: "On the phone:", options: { italic: false, breakLine: true } },
-    { text: "“Recognised 3 of 5 words in your question.”", options: { breakLine: true } },
+    { text: "“Recognised 3 of 3 words in your question.”", options: { breakLine: true } },
     { text: "“It recognised none of your words. It answered anyway.”" },
   ], { x: 5.9, y: 0.2, w: 3.75, h: 0.76, fontFace: SANS, fontSize: 10.5, italic: true, color: C.muted, align: "right", valign: "middle", paraSpaceAfter: 1 });
 

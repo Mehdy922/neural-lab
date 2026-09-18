@@ -4,8 +4,9 @@ Two classroom lessons on what a machine really learns. Lesson 1 · Teach the mac
 
 A lesson is a slide deck plus an activity in the app. The decks are in `slides/` (see **The lesson slides**
 below); the activities are in the app, one room per class, and run as described under **Running Lesson 1**
-and **Running Lesson 2**. Lesson 1 needs a deck period and then an activity period (plus another if you
-run the bendy fence); Lesson 2 runs as one 40-minute period, with its slides interleaved with the activity.
+and **Running Lesson 2**. Lesson 1 needs a deck period and then an activity period (and a second activity
+period if you run the bendy fence); Lesson 2 runs as one 40-minute period, with its slides interleaved
+with the activity.
 
 Live: https://mehdy922.github.io/neural-lab/
 
