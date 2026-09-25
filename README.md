@@ -2,9 +2,9 @@
 
 Two classroom lessons on what a machine really learns. Lesson 1 · Teach the machine: teams draw two things, train a tiny neural network, and watch their ~100% collapse on other teams' drawings. Lesson 2 · Talk to the machine: everyone questions HistoryBot, a bot that has read one 2,000-word text, votes on its answers, then trains and cross-examines bots of their own. Both run in the browser on phones; the teacher projects one tab.
 
-A lesson is a slide deck plus an activity in the app. The decks are in `slides/` (see **The lesson slides**
-below); the activities are in the app, one room per class, and run as described under **Running Lesson 1**
-and **Running Lesson 2**. Lesson 1 needs a deck period and then an activity period (and a second activity
+A lesson is a slide deck plus an activity in the app. The decks are kept locally and are not in this repo
+(see **The lesson slides** below); the activities are in the app, one room per class, and run as described
+under **Running Lesson 1** and **Running Lesson 2**. Lesson 1 needs a deck period and then an activity period (and a second activity
 period if you run the bendy fence); Lesson 2 runs as one 40-minute period, with its slides interleaved
 with the activity.
 
@@ -111,6 +111,9 @@ npm run simulate -- --activity 2 --students 10 --max-teams 4 --hold 300
   `npm run test:rules` is what actually exercises the rules.
 
 ## The lesson slides
+
+**The decks are not in this repository.** They live in `slides/`, which is git-ignored, because the speaker
+notes carry the reveals the lessons depend on and this repo is public. Keep that folder backed up yourself.
 
 Two decks, one per lesson, both generated from the app's palette and the screenshots in `slides/img/`, with
 speaker notes and timings on every slide. They use fonts that ship with Windows and Office, so they open the
