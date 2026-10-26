@@ -37,7 +37,7 @@ export function trainModel(text) {
 export const modelStats = (m) => ({ words: m.wordCount, vocab: m.vocab });
 
 // The word of the model's vocabulary a student meant, or null if the model has never read anything
-// like it. Exact first, then an ending, then one or two typos. Err toward missing: a word genuinely
+// like it. Exact first, then an ending, then a single typo. Err toward missing: a word genuinely
 // outside the text must stay unrecognised or the whole lesson collapses.
 export function resolveWord(model, word) {
   if (model.uni?.[word]) return { word, how: "exact" };
@@ -55,6 +55,8 @@ export function resolveWord(model, word) {
   const cap = 1;
   let best = null;
   for (const candidate of model.vocabWords || []) {
+    // The first-character guard does real work; the length check is only a fast path, since at
+    // cap 1 editDistance already rejects anything whose lengths differ by more than one.
     if (candidate[0] !== word[0] || Math.abs(candidate.length - word.length) > 1) continue;
     const d = editDistance(word, candidate, cap);
     if (d > cap) continue;
