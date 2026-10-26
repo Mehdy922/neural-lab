@@ -57,21 +57,63 @@ export function contentWords(text) {
 // `saw` is also a tool, `rose` is also a flower. Resolution can only ever land on a word the text
 // really contains, so the cost is the bot seeding from a neighbouring sense, never an invented
 // word, and disambiguating a 2,000-word text would cost more than the sense it would save.
-const IRREGULAR_GROUPS = [
-  // irregular verbs, with the past participle wherever one is in everyday use
-  ["build", "built"], ["fight", "fought"], ["win", "won"], ["make", "made"], ["come", "came"],
-  ["lead", "led"], ["send", "sent"], ["lose", "lost"], ["hold", "held"], ["bring", "brought"],
-  ["buy", "bought"], ["teach", "taught"], ["catch", "caught"], ["run", "ran"], ["say", "said"],
-  ["tell", "told"], ["think", "thought"], ["sit", "sat"], ["stand", "stood"], ["keep", "kept"],
-  ["leave", "left"], ["pay", "paid"], ["hear", "heard"], ["understand", "understood"],
-  ["feel", "felt"], ["mean", "meant"], ["spend", "spent"], ["meet", "met"], ["find", "found"],
-  ["write", "wrote", "written"], ["take", "took", "taken"], ["give", "gave", "given"],
-  ["know", "knew", "known"], ["grow", "grew", "grown"], ["see", "saw", "seen"],
-  ["fall", "fell", "fallen"], ["speak", "spoke", "spoken"], ["begin", "began", "begun"],
-  ["eat", "ate", "eaten"], ["fly", "flew", "flown"], ["throw", "threw", "thrown"],
-  ["swim", "swam", "swum"], ["drink", "drank", "drunk"], ["sing", "sang", "sung"],
-  ["ring", "rang", "rung"], ["draw", "drew", "drawn"], ["rise", "rose", "risen"],
-  ["choose", "chose", "chosen"],
+export const IRREGULAR_GROUPS = [
+  // Irregular verbs, each group carrying its whole paradigm: base, -s, -ing, past, and the past
+  // participle wherever one is in everyday use. The regular forms are written out rather than
+  // left to the suffix rules, because a suffix-derived form may no longer reach a group key (see
+  // resolveWord in ngram.js) — so on a text that only ever says "fought", a student typing
+  // "fighting" would otherwise get nothing at all.
+  ["build", "builds", "building", "built"],
+  ["fight", "fights", "fighting", "fought"],
+  ["win", "wins", "winning", "won"],
+  ["make", "makes", "making", "made"],
+  ["come", "comes", "coming", "came"],
+  ["lead", "leads", "leading", "led"],
+  ["send", "sends", "sending", "sent"],
+  ["lose", "loses", "losing", "lost"],
+  ["hold", "holds", "holding", "held"],
+  ["bring", "brings", "bringing", "brought"],
+  ["buy", "buys", "buying", "bought"],
+  ["teach", "teaches", "teaching", "taught"],
+  ["catch", "catches", "catching", "caught"],
+  ["run", "runs", "running", "ran"],
+  ["say", "says", "saying", "said"],
+  ["tell", "tells", "telling", "told"],
+  ["think", "thinks", "thinking", "thought"],
+  ["sit", "sits", "sitting", "sat"],
+  ["stand", "stands", "standing", "stood"],
+  ["keep", "keeps", "keeping", "kept"],
+  // "leaves" is missing from this one on purpose: it is already a leaf, below. Writing it here
+  // too would put one word in two groups, and would hand back the exact chain this table was
+  // restructured to break — "leaves" reaching "left" and answering foliage with a direction.
+  ["leave", "leaving", "left"],
+  ["pay", "pays", "paying", "paid"],
+  ["hear", "hears", "hearing", "heard"],
+  ["understand", "understands", "understanding", "understood"],
+  ["feel", "feels", "feeling", "felt"],
+  ["mean", "means", "meaning", "meant"],
+  ["spend", "spends", "spending", "spent"],
+  ["meet", "meets", "meeting", "met"],
+  ["find", "finds", "finding", "found"],
+  ["write", "writes", "writing", "wrote", "written"],
+  ["take", "takes", "taking", "took", "taken"],
+  ["give", "gives", "giving", "gave", "given"],
+  ["know", "knows", "knowing", "knew", "known"],
+  ["grow", "grows", "growing", "grew", "grown"],
+  ["see", "sees", "seeing", "saw", "seen"],
+  ["fall", "falls", "falling", "fell", "fallen"],
+  ["speak", "speaks", "speaking", "spoke", "spoken"],
+  ["begin", "begins", "beginning", "began", "begun"],
+  ["eat", "eats", "eating", "ate", "eaten"],
+  ["fly", "flies", "flying", "flew", "flown"],
+  ["throw", "throws", "throwing", "threw", "thrown"],
+  ["swim", "swims", "swimming", "swam", "swum"],
+  ["drink", "drinks", "drinking", "drank", "drunk"],
+  ["sing", "sings", "singing", "sang", "sung"],
+  ["ring", "rings", "ringing", "rang", "rung"],
+  ["draw", "draws", "drawing", "drew", "drawn"],
+  ["rise", "rises", "rising", "rose", "risen"],
+  ["choose", "chooses", "choosing", "chose", "chosen"],
   // irregular noun plurals: the topic-bearing win, and what the biology, cooking and folktales
   // bots were missing entirely
   ["child", "children"], ["person", "people"], ["man", "men"], ["woman", "women"],
@@ -105,13 +147,14 @@ export function shapeForms(word) {
   // on a word nobody typed. The word itself is added above, so a short vocabulary word still
   // indexes itself.
   const add = (s) => { if (s && s.length >= 3) out.add(s); };
-  add(word.replace(/'s$/, ""));
-  if (/ies$/.test(word) && word.length > 4) add(word.slice(0, -3) + "y");          // cities -> city
-  if (/(sses|shes|ches|xes|zes)$/.test(word)) add(word.slice(0, -2));              // wishes -> wish
-  if (/s$/.test(word) && !/ss$/.test(word) && word.length > 3) add(word.slice(0, -1));
-  if (/es$/.test(word) && word.length > 4) add(word.slice(0, -2));
-  if (/ed$/.test(word) && word.length > 3) { add(word.slice(0, -2)); add(word.slice(0, -1)); }  // ruled -> rule, died -> die
-  if (/ing$/.test(word) && word.length > 5) { add(word.slice(0, -3)); add(word.slice(0, -3) + "e"); }
+  const w = word;
+  add(w.replace(/'s$/, ""));
+  if (/ies$/.test(w) && w.length > 4) add(w.slice(0, -3) + "y");                   // cities -> city
+  if (/(sses|shes|ches|xes|zes)$/.test(w)) add(w.slice(0, -2));                    // wishes -> wish
+  if (/s$/.test(w) && !/ss$/.test(w) && w.length > 3) add(w.slice(0, -1));
+  if (/es$/.test(w) && w.length > 4) add(w.slice(0, -2));
+  if (/ed$/.test(w) && w.length > 3) { add(w.slice(0, -2)); add(w.slice(0, -1)); }  // ruled -> rule, died -> die
+  if (/ing$/.test(w) && w.length > 5) { add(w.slice(0, -3)); add(w.slice(0, -3) + "e"); }
   return out;
 }
 

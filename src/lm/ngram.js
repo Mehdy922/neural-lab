@@ -10,11 +10,20 @@ const vocabularyOf = (uni) => Object.keys(uni).filter((w) => /^[a-z0-9']+$/.test
 
 // Every form of every vocabulary word, pointing back at the vocabulary word. Two indexes, not
 // one, so that a key a suffix rule derived and a key the irregular table derived can be told
-// apart at lookup time. Ties go to the more frequent word, so "build" lands on whichever of
-// build/built the text actually leans on; an exact tie goes to whichever the text says first.
+// apart at lookup time.
+//
+// A key the text spells exactly belongs to that word, whatever the counts say. A group carries a
+// verb's whole paradigm, so a text saying both "run" and "runs" has both claiming the key "run",
+// and without this "ran" would answer with "runs" — the right lemma spelled as the wrong word.
+// Past that, ties go to the more frequent word, so "build" lands on whichever of build/built the
+// text actually leans on; an exact tie goes to whichever the text says first.
 function indexForms(uni, vocabWords) {
   const shape = {}, group = {};
-  const claim = (index, form, w) => { if (!index[form] || uni[w] > uni[index[form]]) index[form] = w; };
+  const claim = (index, form, w) => {
+    const held = index[form];
+    if (held === form) return;                                   // the text's own word already has it
+    if (!held || w === form || uni[w] > uni[held]) index[form] = w;
+  };
   for (const w of vocabWords) {
     for (const form of shapeForms(w)) claim(shape, form, w);
     for (const form of groupForms(w)) claim(group, form, w);

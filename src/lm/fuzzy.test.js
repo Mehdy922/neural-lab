@@ -3,7 +3,7 @@
 // bot's text stays unrecognised, so the hallucination beat survives.
 import { describe, it, expect } from "vitest";
 import { trainModel, coverage, generate, resolveWord } from "./ngram.js";
-import { wordForms, editDistance, STOPWORDS, tokenize, isWord } from "./tokenize.js";
+import { wordForms, editDistance, STOPWORDS, tokenize, isWord, IRREGULAR_GROUPS } from "./tokenize.js";
 import { STARTER_TEXTS, HISTORY_TEXT } from "./texts/index.js";
 
 const history = trainModel(HISTORY_TEXT);
@@ -116,6 +116,49 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(history.uni["best"]).toBeDefined();
     expect(resolveWord(history, "better")).toBeNull();
     expect(resolveWord(history, "good")).toBeNull();
+  });
+
+  // The regular forms of an irregular verb are written into its group rather than left to the
+  // suffix rules. A suffix-derived form may no longer reach a group key, so a text that only ever
+  // uses the irregular form would otherwise answer nothing at all to the regular one — and
+  // "building" and "fighting" are the words a text about empires and battles turns on.
+  const PARADIGM = [
+    ["cricket", "fighting", "fought"], ["folktales", "building", "built"], ["space", "building", "built"],
+    ["folktales", "flies", "flew"], ["folktales", "sits", "sat"], ["folktales", "stands", "stood"],
+    ["history", "stands", "stood"], ["history", "gives", "gave"], ["cooking", "makes", "made"],
+  ];
+  it.each(PARADIGM)("the %s bot reads %s as %s", (id, typed, read) => {
+    expect(resolveWord(bot(id), typed)).toEqual({ word: read, how: "stem" });
+  });
+
+  // Now that a group carries the regular forms too, a text can hold several members of one group
+  // and all of them claim the same keys. The word the text spells exactly as the key must win, or
+  // "ran" answers with "runs" on a text that says both — the right lemma, the wrong word.
+  it("gives a key that is itself a word of the text to that word, not to a commoner relative", () => {
+    const cricket = bot("cricket"), space = bot("space");
+    expect(cricket.uni["run"]).toBeDefined();
+    expect(cricket.uni["runs"]).toBeDefined();
+    expect(cricket.uni["runs"]).toBeGreaterThan(cricket.uni["run"]);   // and it is the commoner one
+    expect(resolveWord(cricket, "ran")).toEqual({ word: "run", how: "stem" });
+    expect(space.uni["sit"]).toBeDefined();
+    expect(resolveWord(space, "sat")).toEqual({ word: "sit", how: "stem" });
+  });
+
+
+  // A word written into two groups would silently take only the later one, because the
+  // member -> group Map keeps one entry per member. "leaves" is the live example: it is a leaf,
+  // so it is deliberately not also a form of "leave" — that is the chain this work removed.
+  it("never puts one word in two groups, and never a member below the three-letter floor", () => {
+    const owner = new Map();
+    for (const group of IRREGULAR_GROUPS) {
+      for (const member of group) {
+        expect(member.length, member).toBeGreaterThanOrEqual(3);
+        expect(owner.has(member), `"${member}" is in two groups: ${owner.get(member)} and ${group.join("/")}`).toBe(false);
+        owner.set(member, group.join("/"));
+      }
+    }
+    expect(owner.get("leaves")).toBe("leaf/leaves");
+    expect(owner.get("left")).toBe("leave/leaving/left");
   });
 
   // One hop, never two. "leaves" strips to "leave", and the leave/left group would have carried
