@@ -1,9 +1,16 @@
 // Word-level tokenizer for the tiny language model. Words and sentence ends are tokens.
 
+// Words that carry no topic signal, so the matcher is allowed to read them by exact spelling and
+// nothing else. The evaluative comparatives are in here deliberately: "which is better" is the
+// shape of a question about any subject at all, so good/better/best, bad/worse/worst and
+// little/less/least belong beside the many/much/more/most that were always here, not in the
+// irregular table. A stopword never reaches the typo stage, which is a stronger fix for
+// "better" landing on "batter" than intercepting it one step earlier ever was.
 export const STOPWORDS = new Set(("a an the and or but if then so of to in on at by for from with about as into like through " +
   "is are was were be been being am do does did doing have has had having will would shall should can could may might must " +
   "i me my we us our you your he him his she her it its they them their this that these those there here who whom whose which what " +
   "when where why how all any both each few more most other some such no nor not only own same than too very just also " +
+  "good better best bad worse worst little less least " +
   "up down out over under again further once because while until during before after above below off yes please tell explain many much make made does get got").split(" "));
 
 const END = new Set([".", "?", "!"]);
@@ -75,9 +82,8 @@ const IRREGULAR_GROUPS = [
   ["loaf", "loaves"], ["calf", "calves"],
   // -o nouns that pluralise in -oes, enumerated for the same reason
   ["potato", "potatoes"], ["tomato", "tomatoes"], ["mango", "mangoes"], ["hero", "heroes"],
-  // comparatives, which are what stops "better" reaching "batter" on the cricket bot.
-  // many / more / most are already stopwords, so they are left alone.
-  ["good", "better", "best"], ["bad", "worse", "worst"], ["little", "less", "least"],
+  // No comparatives. good/better/best and its kind are evaluative, not topical, so they are
+  // stopwords instead — see STOPWORDS at the top of this file.
 ];
 
 // member -> its whole group, built once at load. The table used to be re-scanned with

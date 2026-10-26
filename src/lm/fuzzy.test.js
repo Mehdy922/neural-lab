@@ -54,8 +54,13 @@ describe("wordForms", () => {
 describe("a bot reads an irregular form of a word its text really contains", () => {
   const bot = (id) => trainModel(STARTER_TEXTS.find((t) => t.id === id).text);
 
-  it("reads better as good on the cricket bot, not batter", () => {
-    expect(resolveWord(bot("cricket"), "better")).toEqual({ word: "good", how: "stem" });
+  // The headline defect. It is fixed one stage earlier than a form table can manage: "better" is
+  // an evaluative word, as free of topic as the many/more/most already in STOPWORDS, so it never
+  // reaches the typo stage at all rather than being intercepted just before it.
+  it("never reads better as batter, on any bot", () => {
+    expect(STOPWORDS.has("better")).toBe(true);
+    expect(bot("cricket").uni["batter"]).toBeDefined();          // the word it used to land on
+    for (const t of STARTER_TEXTS) expect(resolveWord(bot(t.id), "better"), t.id).toBeNull();
   });
   it("reads child as children on the cooking bot, not chili", () => {
     expect(resolveWord(bot("cooking"), "child")).toEqual({ word: "children", how: "stem" });
@@ -78,14 +83,16 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(resolveWord(bot(id), typed)).toEqual({ word: read, how: "stem" });
   });
 
-  it("links good, better and best to one another, which a flat past-to-base map could not", () => {
-    for (const [a, b] of [["good", "better"], ["good", "best"], ["better", "good"],
-                          ["better", "best"], ["best", "good"], ["best", "better"]]) {
+  it("links all three of eat, ate and eaten to one another, which a flat past-to-base map could not", () => {
+    for (const [a, b] of [["eat", "ate"], ["eat", "eaten"], ["ate", "eat"],
+                          ["ate", "eaten"], ["eaten", "eat"], ["eaten", "ate"]]) {
       expect([...wordForms(a)], `${a} should reach ${b}`).toContain(b);
     }
-    const cricket = bot("cricket");                  // its text says "good" and neither other form
-    expect(resolveWord(cricket, "better")?.word).toBe("good");
-    expect(resolveWord(cricket, "best")?.word).toBe("good");
+    const cooking = bot("cooking");                  // its text says "eat" and neither other form
+    expect(cooking.uni["ate"]).toBeUndefined();
+    expect(cooking.uni["eaten"]).toBeUndefined();
+    expect(resolveWord(cooking, "ate")?.word).toBe("eat");
+    expect(resolveWord(cooking, "eaten")?.word).toBe("eat");
   });
 
   it("keeps its three-letter members, which the stem floor would otherwise cut", () => {
@@ -94,14 +101,23 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     }
   });
 
-  // The history text says "best" — "one of the best drainage systems", "best remembered for the
-  // Taj Mahal" — and never says "good", so the comparative group reaches it. This is the one
-  // demo question whose numbers moved; the coverage tests below say so in full.
-  it("reads better as best on the history bot, whose text says best and never good", () => {
-    expect(history.uni["good"]).toBeUndefined();
+  // Evaluative comparatives carry no topic signal at all — "which is better" is the shape of a
+  // question about anything whatever — so they belong beside many/more/most in STOPWORDS rather
+  // than in this table. Keeping them out is what keeps "It recognised none of your words" intact
+  // for a question whose topic words are all foreign.
+  it("treats the comparatives as stopwords instead of as word forms", () => {
+    for (const w of ["good", "better", "best", "bad", "worse", "worst", "little", "less", "least"]) {
+      expect(STOPWORDS.has(w), w).toBe(true);
+    }
+    expect([...wordForms("good")]).not.toContain("better");
+    expect([...wordForms("better")]).not.toContain("good");
+    expect([...wordForms("little")]).not.toContain("less");
+    // the history text really says "best", and that is still not a way in for "better" or "good"
     expect(history.uni["best"]).toBeDefined();
-    expect(resolveWord(history, "better")).toEqual({ word: "best", how: "stem" });
+    expect(resolveWord(history, "better")).toBeNull();
+    expect(resolveWord(history, "good")).toBeNull();
   });
+
 
   // The invariant, at the level of the new table. A group is only ever a bridge between forms of a
   // word the text really holds; with no member in the text, every member stays foreign.
@@ -302,22 +318,20 @@ describe("coverage counts a corrected word as recognised", () => {
     expect(c.knownWords).toEqual(["built", "taj", "mahal"]);
     expect(c.unknownWords).toEqual([]);
   });
-  // CHANGED by the irregular-group table. "better" was foreign to this bot only by accident: the
-  // history text says "best", and the comparative group now reaches it. The three topic words are
-  // still foreign, which is what this test was ever about, so the expectation is restated rather
-  // than the question quietly reworded, and the all-foreign case it used to stand for is pinned by
-  // the test below it.
-  it("recognises only the comparative when every topic word of the question is foreign", () => {
+  // The original question, back to recognising none of its words. "better" is a stopword now, so
+  // it drops out of the question alongside "is" and "than" rather than counting as a word the bot
+  // failed on: known is 0 again, and total is 3 rather than the 4 this test once asserted.
+  it("still recognises nothing in a question made of foreign words", () => {
     const c = coverage(history, "Is biryani better than pizza or a samosa?");
-    expect(c.known).toBe(1);
-    expect(c.total).toBe(4);
-    expect(c.corrections).toEqual([{ typed: "better", read: "best" }]);
+    expect(c.known).toBe(0);
+    expect(c.total).toBe(3);                         // biryani, pizza, samosa: "better" is a stopword
+    expect(c.corrections).toEqual([]);
     expect(c.unknownWords).toEqual(["biryani", "pizza", "samosa"]);
   });
-  it("still recognises nothing in a question made of foreign words", () => {
+  it("counts a foreign adjective it has no opinion about, rather than dropping it", () => {
     const c = coverage(history, "Is biryani tastier than pizza or a samosa?");
     expect(c.known).toBe(0);
-    expect(c.total).toBe(4);
+    expect(c.total).toBe(4);                         // "tastier" is not a stopword, so it is counted
     expect(c.corrections).toEqual([]);
     expect(c.unknownWords).toEqual(["biryani", "tastier", "pizza", "samosa"]);
   });
@@ -381,19 +395,15 @@ describe("a word that reads as a stopword carries no topic signal", () => {
     expect(c.unknownWords).toEqual(["photosynthesis"]);
     expect(c.corrections).toEqual([]);             // nothing worth telling a student about
   });
-  // CHANGED by the irregular-group table, for the same reason as the coverage test above: on this
-  // bot "better" now reads as "best". What this test actually pins is the misspelled stopword
-  // dropping out, which is unmoved; the climax itself is pinned by the test after it, on a
-  // question whose every real word is genuinely foreign.
-  it("drops the misspelled stopword and leaves the one in-text word recognised", () => {
-    const c = coverage(history, "Wich is better, biryani or pizza?");
-    expect(c.known).toBe(1);                       // "better" reads as "best", which this text says
-    expect(c.total).toBe(3);                       // better, biryani, pizza: "wich" reads as "with"
-    expect(c.corrections).toEqual([{ typed: "better", read: "best" }]);
-  });
   it("leaves the climax intact when every real word is foreign", () => {
-    const c = coverage(history, "Wich is tastier, biryani or pizza?");
+    const c = coverage(history, "Wich is better, biryani or pizza?");
     expect(c.known).toBe(0);                       // the line must still read "It recognised none of your words"
+    expect(c.total).toBe(2);                       // biryani, pizza: "wich" reads as "with", "better" is a stopword
+    expect(c.corrections).toEqual([]);
+  });
+  it("counts a foreign adjective, and still recognises none of the words", () => {
+    const c = coverage(history, "Wich is tastier, biryani or pizza?");
+    expect(c.known).toBe(0);
     expect(c.total).toBe(3);                       // tastier, biryani, pizza
     expect(c.corrections).toEqual([]);
   });
