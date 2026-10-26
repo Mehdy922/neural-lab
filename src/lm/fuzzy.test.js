@@ -244,3 +244,41 @@ describe("generate seeds from the corrected word", () => {
     expect(opening(a.text)).toEqual(["taj", "mahal"]);
   });
 });
+
+// ── a word that reads as a stopword is a stopword ────────────────────────────
+// A misspelled stopword is not itself in STOPWORDS, so it reaches the matcher as a content word
+// and could land on a stopword of the text. It carries no topic signal either way, so it drops out
+// of the question's words entirely rather than counting as recognised.
+describe("a word that reads as a stopword carries no topic signal", () => {
+  it("still reports what the matcher found, so the policy is visible in one place", () => {
+    expect(resolveWord(history, "whta")).toEqual({ word: "what", how: "fuzzy" });
+    expect(STOPWORDS.has("what")).toBe(true);
+  });
+  it("drops out of the question's words instead of counting as known", () => {
+    const c = coverage(history, "Whta is photosynthesis?");
+    expect(c.total).toBe(1);                       // photosynthesis alone: "whta" reads as "what"
+    expect(c.known).toBe(0);
+    expect(c.unknownWords).toEqual(["photosynthesis"]);
+    expect(c.corrections).toEqual([]);             // nothing worth telling a student about
+  });
+  it("leaves the climax intact when every real word is foreign", () => {
+    const c = coverage(history, "Wich is better, biryani or pizza?");
+    expect(c.known).toBe(0);                       // the line must still read "It recognised none of your words"
+    expect(c.total).toBe(3);                       // better, biryani, pizza
+    expect(c.corrections).toEqual([]);
+  });
+  it("never seeds the generator from a misspelled stopword", () => {
+    const m = trainModel("Delhi was the capital. The king ruled with care.");
+    expect(resolveWord(m, "wich")).toEqual({ word: "with", how: "fuzzy" });
+    const { text, seededFrom } = generate(m, "Wich care?", { seed: 0 });
+    expect(text.toLowerCase().startsWith("with")).toBe(false);   // no invented "with care" pair
+    expect(seededFrom).toBe("question");
+    expect(text.toLowerCase().startsWith("care")).toBe(true);    // seeded from the one real word
+  });
+  it("still recognises a real content word in the same question", () => {
+    const c = coverage(history, "Wich emperers ruled Dehli?");
+    expect(c.total).toBe(3);                       // emperers, ruled, dehli
+    expect(c.known).toBe(3);
+    expect(c.corrections).toEqual([{ typed: "emperers", read: "emperors" }, { typed: "dehli", read: "delhi" }]);
+  });
+});

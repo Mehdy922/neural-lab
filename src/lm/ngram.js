@@ -57,19 +57,26 @@ export function resolveWord(model, word) {
   return best ? { word: best.word, how: "fuzzy" } : null;
 }
 
+// A misspelled stopword is not itself in STOPWORDS, so it arrives here as a content word and can
+// land on a stopword of the text — "whta" on "what". It carries no topic signal either way, so it
+// is treated as the stopword it is: dropped, not counted, never corrected on screen.
+const readsAsStopword = (read) => !!read && STOPWORDS.has(read.word);
+
 // How much of the question the bot has actually read. A word it reached only by looking past a
 // typo still counts as known — but the correction is reported, so the machine stays honest about
 // having done a dumb lookup rather than understood anything.
 export function coverage(model, question) {
   const knownWords = [], unknownWords = [], corrections = [];
-  const words = contentWords(question);
-  for (const typed of words) {
+  let total = 0;
+  for (const typed of contentWords(question)) {
     const read = resolveWord(model, typed);
+    if (readsAsStopword(read)) continue;            // a stopword in disguise: not part of the question
+    total++;
     if (!read) { unknownWords.push(typed); continue; }
     knownWords.push(read.word);                     // the vocabulary word, so callers can highlight it in the text
     if (read.word !== typed) corrections.push({ typed, read: read.word });
   }
-  return { known: knownWords.length, total: words.length, knownWords, unknownWords, corrections };
+  return { known: knownWords.length, total, knownWords, unknownWords, corrections };
 }
 
 // Weighted pick over a {token: count} object. `filter` optionally restricts candidates.
@@ -88,7 +95,11 @@ export function generate(model, question, { seed = 0, maxWords = 40, minWords = 
   const rand = mulberry32((hashString(String(question)) + seed) | 0);
   // Seed from the words the bot actually read, not the ones the student typed, or coverage would
   // claim a word was recognised while the bot still could not use it. Stopwords pass through.
-  const read = (t) => (STOPWORDS.has(t) ? t : resolveWord(model, t)?.word || t);
+  const read = (t) => {
+    if (STOPWORDS.has(t)) return t;
+    const r = resolveWord(model, t);
+    return r && !readsAsStopword(r) ? r.word : t;   // a word that reads as a stopword seeds nothing
+  };
   const qTokens = tokenize(question).filter(isWord).map(read);
   let w1 = null, w2 = null, seededFrom = "random";
 
