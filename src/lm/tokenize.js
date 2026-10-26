@@ -35,25 +35,35 @@ export function contentWords(text) {
 // Students type English on phones. These two helpers let the model look past an ending or a slip
 // of the thumb. They know nothing about any model; ngram.js decides what to do with them.
 
-// The irregular verbs a 2,000-word school text actually uses. Looked up in both directions, so a
-// text that says "built" also answers to "build", and a text that says "build" answers to "built".
-const IRREGULAR = { built: "build", fought: "fight", won: "win", took: "take", began: "begin", made: "make",
-  wrote: "write", came: "come", gave: "give", led: "lead", sent: "send", lost: "lose", held: "hold",
-  brought: "bring", bought: "buy", taught: "teach", caught: "catch", fell: "fall", grew: "grow",
-  knew: "know", ran: "run", said: "say", saw: "see", spoke: "speak", told: "tell", thought: "think" };
+// The irregular verbs a 2,000-word school text actually uses, written as groups rather than a flat
+// past -> base map: every member resolves to every other. Looked up in both directions, so a text
+// that says "built" also answers to "build", and a text that says "build" answers to "built".
+const IRREGULAR_GROUPS = [
+  // irregular verbs
+  ["build", "built"], ["fight", "fought"], ["win", "won"], ["take", "took"], ["begin", "began"],
+  ["make", "made"], ["write", "wrote"], ["come", "came"], ["give", "gave"], ["lead", "led"],
+  ["send", "sent"], ["lose", "lost"], ["hold", "held"], ["bring", "brought"], ["buy", "bought"],
+  ["teach", "taught"], ["catch", "caught"], ["fall", "fell"], ["grow", "grew"], ["know", "knew"],
+  ["run", "ran"], ["say", "said"], ["see", "saw"], ["speak", "spoke"], ["tell", "told"],
+  ["think", "thought"],
+];
+
+// member -> its whole group, built once at load. The table used to be re-scanned with
+// Object.entries on every single lookup, which is O(table) per word; this is a hash hit.
+const IRREGULAR = new Map();
+for (const group of IRREGULAR_GROUPS) for (const member of group) IRREGULAR.set(member, group);
 
 // Every form of `word` worth looking up, including `word` itself. Deliberately small: plurals,
-// possessives, past and present participles, and the irregular verbs above.
+// possessives, past and present participles, and the irregular groups above.
 export function wordForms(word) {
   const out = new Set([word]);
   // Three letters minimum: stripping "-ed" twice over leaves fragments like "us" from "used" or
   // "fl" from "fled", and the stem path has none of the fuzzy guards, so such a key is a free hit
   // on a word nobody typed. The word itself is added above, so a short vocabulary word still
-  // indexes itself.
+  // indexes itself. No group member is shorter than three letters, so the floor never cuts one.
   const add = (s) => { if (s && s.length >= 3) out.add(s); };
   add(word.replace(/'s$/, ""));
-  if (IRREGULAR[word]) add(IRREGULAR[word]);
-  for (const [past, base] of Object.entries(IRREGULAR)) if (base === word) add(past);
+  for (const member of IRREGULAR.get(word) || []) add(member);
   if (/ies$/.test(word) && word.length > 4) add(word.slice(0, -3) + "y");          // cities -> city
   if (/(sses|shes|ches|xes|zes)$/.test(word)) add(word.slice(0, -2));              // wishes -> wish
   if (/s$/.test(word) && !/ss$/.test(word) && word.length > 3) add(word.slice(0, -1));
