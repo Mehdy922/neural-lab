@@ -5,6 +5,12 @@ import { tokenize, contentWords, detokenize, hashString, isWord, isEnd, STOPWORD
 
 const bump = (obj, k) => { obj[k] = (obj[k] || 0) + 1; };
 
+// A model's tables are keyed by whatever a student types, and "constructor" is both a real word
+// and the one all-lowercase key on Object.prototype. With a prototype behind them every bot
+// answered "constructor" as a word it knew, and the bigram rows would even let it say it back.
+// These are lookups, so they are given no prototype at all.
+const table = () => Object.create(null);
+
 // Words the model can be asked about: real words, no sentence ends. Built once, at train time.
 const vocabularyOf = (uni) => Object.keys(uni).filter((w) => /^[a-z0-9']+$/.test(w));
 
@@ -18,7 +24,7 @@ const vocabularyOf = (uni) => Object.keys(uni).filter((w) => /^[a-z0-9']+$/.test
 // Past that, ties go to the more frequent word, so "build" lands on whichever of build/built the
 // text actually leans on; an exact tie goes to whichever the text says first.
 function indexForms(uni, vocabWords) {
-  const shape = {}, group = {};
+  const shape = table(), group = table();
   const claim = (index, form, w) => {
     const held = index[form];
     if (held === form) return;                                   // the text's own word already has it
@@ -33,13 +39,13 @@ function indexForms(uni, vocabWords) {
 
 export function trainModel(text) {
   const tokens = tokenize(text);
-  const uni = {}, bi = {}, tri = {}, starts = {};
+  const uni = table(), bi = table(), tri = table(), starts = table();
   let p1 = null, p2 = null, atStart = true;
   for (const t of tokens) {
     bump(uni, t);
     if (atStart && isWord(t)) bump(starts, t);
-    if (p1) bump((bi[p1] ||= {}), t);
-    if (p1 && p2) bump((tri[`${p2} ${p1}`] ||= {}), t);
+    if (p1) bump((bi[p1] ||= table()), t);
+    if (p1 && p2) bump((tri[`${p2} ${p1}`] ||= table()), t);
     atStart = isEnd(t);
     p2 = p1; p1 = t;
   }

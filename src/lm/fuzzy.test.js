@@ -225,6 +225,22 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     }
   });
 
+  // A model's tables are lookups, not objects with a prototype behind them. "constructor" is the
+  // only all-lowercase key on Object.prototype, so every bot used to answer it as a word it knew
+  // — and, because the bigram tables had a prototype too, could say it back in an answer.
+  it("does not know constructor, on any bot", () => {
+    for (const t of STARTER_TEXTS) {
+      const m = trainModel(t.text);
+      expect(m.uni["constructor"], t.id).toBeUndefined();
+      expect(resolveWord(m, "constructor"), t.id).toBeNull();
+      const c = coverage(m, "What is a constructor?");
+      expect(c.known, t.id).toBe(0);
+      expect(c.unknownWords, t.id).toEqual(["constructor"]);
+    }
+    // and it cannot reach the generator either, through a bigram or trigram row
+    expect(generate(history, "the constructor", { seed: 0 }).text.toLowerCase()).not.toContain("constructor");
+  });
+
   // The invariant, at the level of the new table. A group is only ever a bridge between forms of a
   // word the text really holds; with no member in the text, every member stays foreign.
   it("resolves nothing when the text holds no member of the group", () => {
