@@ -77,9 +77,13 @@ describe("resolveWord guards (the thresholds the prototype measured)", () => {
   it("requires the same first letter", () => {
     expect(resolveWord(m, "felhi")).toBeNull();      // one edit from "delhi", but the first letter differs
   });
-  it("allows a length difference of at most one", () => {
-    expect(resolveWord(m, "delh")?.word).toBe("delhi");
-    expect(resolveWord(m, "del")).toBeNull();
+  it("allows a length difference of at most one, which at cap 1 is a fast path and nothing more", () => {
+    // Two words whose lengths differ by more than 1 are already more than one edit apart, so
+    // editDistance rejects them on its own. The clause only saves the walk. These assert the
+    // half it does decide: one letter shorter and one letter longer both still reach "delhi".
+    expect(resolveWord(m, "delh")?.word).toBe("delhi");          // 4 letters, one short
+    expect(resolveWord(m, "delhii")?.word).toBe("delhi");        // 6 letters, one long
+    expect(editDistance("del", "delhi", 1)).toBeGreaterThan(1);  // 2 apart: the cap rejects it anyway
   });
   it("allows exactly one edit, at every length", () => {
     expect(resolveWord(m, "capitol")?.word).toBe("capital");       // 7 letters, 1 edit
@@ -122,25 +126,48 @@ describe("stopwords are matched by exact spelling only", () => {
 // ── the invariant ────────────────────────────────────────────────────────────
 // A word genuinely outside a bot's text must stay unrecognised. The lesson's climax is a bot
 // answering a question whose every word it failed to recognise.
-const FOREIGN = [
+// Words from another world entirely. These catch a matcher that has gone broadly wrong.
+const OFF_TOPIC = [
   "biryani", "photosynthesis", "ronaldo", "minecraft", "bitcoin", "tiktok", "algebra", "dinosaur",
   "pizza", "burger", "volcano", "python", "homework", "molecule", "neuron", "gravity", "momentum",
   "chemistry", "messi", "football", "planet", "galaxy", "oxygen", "physics", "earthquake", "guitar",
   "elephant", "samosa", "youtube", "whatsapp", "helicopter", "vaccine", "telescope", "keyboard",
 ];
+// Words that sit one edit from a word these texts really contain, and are held out by a single
+// guard each. Without them the sweep passes with the first-character guard or the four-letter
+// floor deleted, which a mutation run proved. Each is noted with the guard it pins:
+//   cell  -> fell/well        mood -> food/good        coal -> goal        worth -> north
+//   mars  -> wars             (first character)
+//   whr   -> war/why/who      now  -> no/new/not       (four-letter floor)
+const NEAR_MISS = ["cell", "mars", "mood", "coal", "worth", "whr", "now"];
+const FOREIGN = [...OFF_TOPIC, ...NEAR_MISS];
+
 // Words from that list that genuinely appear in a given starter text, so of course they resolve.
-const IN_TEXT = { biology: ["photosynthesis", "molecule", "oxygen"], cooking: ["biryani"], space: ["gravity", "planet", "telescope"] };
+const IN_TEXT = {
+  history: ["now"],
+  biology: ["photosynthesis", "molecule", "oxygen", "cell"],
+  cooking: ["biryani"],
+  space: ["gravity", "planet", "telescope", "mars"],
+};
 // An everyday plural of a word that genuinely appears: the space text says "galaxies".
 const INFLECTION_OF_AN_IN_TEXT_WORD = { space: { galaxy: "galaxies" } };
-// The one measured false positive across 34 words x 6 texts: two real words one edit apart.
-// Accepted on purpose — tightening the thresholds to kill it also kills britsh->british and rulled->ruled.
-const DOCUMENTED_FALSE_POSITIVE = { biology: { planet: "plant" } };
+// Accepted false positives: short real words one edit from a different real word the text contains.
+// This is a class, not a list of freaks — on short words one edit from a vocabulary word the rate
+// runs at a few per cent, and these are the instances this particular sample happens to expose.
+// Accepted on purpose: tightening the thresholds to kill them also kills britsh->british,
+// rulled->ruled and mahel->mahal, which were measured. The sweep's job is to notice a NEW one.
+const DOCUMENTED_FALSE_POSITIVE = {
+  biology: { planet: "plant" },
+  cricket: { mars: "mark" },
+  space: { mood: "moon" },
+};
 
 describe("words outside the text stay unrecognised (all six starter texts)", () => {
-  it("uses a list of at least 20 clearly foreign words", () => {
-    expect(FOREIGN.length).toBeGreaterThanOrEqual(20);
+  it("uses a list of at least 20 clearly foreign words, plus near misses that pin the guards", () => {
+    expect(OFF_TOPIC.length).toBeGreaterThanOrEqual(20);
     expect(new Set(FOREIGN).size).toBe(FOREIGN.length);
-    for (const w of ["biryani", "photosynthesis", "ronaldo", "minecraft", "bitcoin", "tiktok", "algebra", "dinosaur"]) expect(FOREIGN).toContain(w);
+    for (const w of ["biryani", "photosynthesis", "ronaldo", "minecraft", "bitcoin", "tiktok", "algebra", "dinosaur"]) expect(OFF_TOPIC).toContain(w);
+    for (const w of NEAR_MISS) expect(FOREIGN).toContain(w);
   });
 
   it.each(STARTER_TEXTS.map((t) => [t.id, t]))("%s", (id, t) => {
@@ -163,7 +190,7 @@ describe("words outside the text stay unrecognised (all six starter texts)", () 
     }
   });
 
-  it("leaks exactly the two measured words across all six texts, and no others", () => {
+  it("leaks exactly the four measured words across all six texts, and no others", () => {
     const leaks = [];
     for (const t of STARTER_TEXTS) {
       const m = trainModel(t.text);
@@ -173,7 +200,12 @@ describe("words outside the text stay unrecognised (all six starter texts)", () 
         if (r) leaks.push(`${t.id}: ${w} -> ${r.word} (${r.how})`);
       }
     }
-    expect(leaks.sort()).toEqual(["biology: planet -> plant (fuzzy)", "space: galaxy -> galaxies (stem)"]);
+    expect(leaks.sort()).toEqual([
+      "biology: planet -> plant (fuzzy)",      // accepted: short real words one edit apart
+      "cricket: mars -> mark (fuzzy)",         // accepted: same class
+      "space: galaxy -> galaxies (stem)",      // not a leak: a correct plural of "galaxies", which is in the text
+      "space: mood -> moon (fuzzy)",           // accepted: same class
+    ]);
   });
 
   it("recognises none of the words of a plainly off-text question", () => {
