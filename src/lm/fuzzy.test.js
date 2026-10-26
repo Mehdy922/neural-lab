@@ -143,6 +143,16 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(space.uni["sit"]).toBeDefined();
     expect(resolveWord(space, "sat")).toEqual({ word: "sit", how: "stem" });
 
+    // Both of those texts happen to use the plural first, and a word that spells the key is given
+    // it on sight, so neither reaches the guard that defends the key once a relative holds it.
+    // This one says "run" first and "runs" three times after, which is the only order that does.
+    const m = trainModel("The player will run between the wickets. He runs and runs and runs again.");
+    expect(m.uni["run"]).toBe(1);
+    expect(m.uni["runs"]).toBe(3);
+    const order = Object.keys(m.uni);
+    expect(order.indexOf("run")).toBeLessThan(order.indexOf("runs"));   // the rarer word comes first
+    expect(m.forms.group["run"]).toBe("run");                           // and keeps its own key
+    expect(resolveWord(m, "ran")).toEqual({ word: "run", how: "stem" });
   });
 
   // A group member must not reach a word the text merely spells with an ending. "founded" is not
@@ -165,6 +175,14 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(resolveWord(bot("space"), "sat")).toEqual({ word: "sit", how: "stem" });
     expect(resolveWord(bot("cooking"), "felt")).toEqual({ word: "feels", how: "stem" });
     expect(resolveWord(bot("cooking"), "meant")).toEqual({ word: "means", how: "stem" });
+  });
+
+  // An equal count leaves a key with the word that claimed it first, which is the word the text
+  // uses first. Loosening the tie-break to >= flips this one to "child's".
+  it("leaves a tied key with the word the text uses first", () => {
+    const folktales = bot("folktales");
+    expect(folktales.uni["children"]).toBe(folktales.uni["child's"]);     // a genuine tie
+    expect(resolveWord(folktales, "child")).toEqual({ word: "children", how: "stem" });
   });
 
   // A possessive is punctuation, not morphology, so it is stripped before any form is derived.
