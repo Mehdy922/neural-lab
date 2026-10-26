@@ -81,11 +81,20 @@ describe("resolveWord guards (the thresholds the prototype measured)", () => {
     expect(resolveWord(m, "delh")?.word).toBe("delhi");
     expect(resolveWord(m, "del")).toBeNull();
   });
-  it("allows one edit up to seven letters and two from eight", () => {
+  it("allows exactly one edit, at every length", () => {
     expect(resolveWord(m, "capitol")?.word).toBe("capital");       // 7 letters, 1 edit
-    expect(resolveWord(m, "capetol")).toBeNull();                  // 7 letters, 2 edits: past the cap
+    expect(resolveWord(m, "capetol")).toBeNull();                  // 7 letters, 2 edits
     expect(resolveWord(m, "emperers")?.word).toBe("emperors");     // 8 letters, 1 edit
-    expect(resolveWord(m, "emparers")?.word).toBe("emperors");     // 8 letters, 2 edits: still inside the cap
+    expect(resolveWord(m, "emparers")).toBeNull();                 // 8 letters, 2 edits: a longer word buys no slack
+    expect(resolveWord(m, "sultanete")?.word).toBe("sultanate");   // 9 letters, 1 edit
+    expect(resolveWord(m, "sultenete")).toBeNull();                // 9 letters, 2 edits
+  });
+  it("does not stretch a long real word onto a different long real word", () => {
+    // "happened" is two edits from "hardened" and every one of the 15 measured ESL errors is a
+    // single edit, so two edits bought nothing and cost the student a rewritten question.
+    const h = trainModel("This system of groups later hardened into castes.");
+    expect(editDistance("happened", "hardened", 2)).toBe(2);
+    expect(resolveWord(h, "happened")).toBeNull();
   });
   it("returns null for a word it cannot reach", () => {
     expect(resolveWord(m, "biryani")).toBeNull();

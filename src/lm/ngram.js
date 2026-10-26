@@ -46,7 +46,10 @@ export function resolveWord(model, word) {
   const forms = model.forms || {};
   for (const form of wordForms(word)) if (forms[form]) return { word: forms[form], how: "stem" };
   if (word.length < 4) return null;                      // too short for one edit to mean anything
-  const cap = word.length >= 8 ? 2 : 1;
+  // One edit, at every length. Every measured ESL error is a single edit once a transposition
+  // counts as one, so a second edit buys nothing and only lets a real word reach a different real
+  // word — "happened" onto "hardened", rewriting the question before answering it.
+  const cap = 1;
   let best = null;
   for (const candidate of model.vocabWords || []) {
     if (candidate[0] !== word[0] || Math.abs(candidate.length - word.length) > 1) continue;
