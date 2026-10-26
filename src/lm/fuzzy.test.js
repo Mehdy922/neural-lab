@@ -291,3 +291,35 @@ describe("a word that reads as a stopword carries no topic signal", () => {
     expect(c.corrections).toEqual([{ typed: "emperers", read: "emperors" }, { typed: "dehli", read: "delhi" }]);
   });
 });
+
+// ── a different year is a different question ─────────────────────────────────
+describe("numbers are matched by exact spelling only", () => {
+  it("never reads one year as another", () => {
+    expect(history.uni["1947"]).toBeDefined();
+    expect(resolveWord(history, "1947")).toEqual({ word: "1947", how: "exact" });
+    expect(resolveWord(history, "1948")).toBeNull();     // one edit from 1947 and from 1940, and neither is meant
+    expect(resolveWord(history, "1949")).toBeNull();
+    expect(resolveWord(history, "1906")).toEqual({ word: "1906", how: "exact" });
+    expect(resolveWord(history, "1907")).toBeNull();
+  });
+  it("tells the student the year was not recognised rather than answering a different one", () => {
+    const c = coverage(history, "What happened in 1948?");
+    expect(c.total).toBe(2);                             // happened, 1948 ("what" and "in" are stopwords)
+    expect(c.known).toBe(0);
+    expect(c.unknownWords).toEqual(["happened", "1948"]);
+    expect(c.corrections).toEqual([]);
+  });
+  it("still recognises a year the text really contains", () => {
+    const c = coverage(history, "What happened in 1947?");
+    expect(c.total).toBe(2);
+    expect(c.known).toBe(1);
+    expect(c.knownWords).toEqual(["1947"]);
+    expect(c.corrections).toEqual([]);
+  });
+  it("does not seed an answer from a year the text has never read", () => {
+    const m = trainModel("Pakistan became independent in 1947. The country was new.");
+    expect(resolveWord(m, "1948")).toBeNull();
+    expect(generate(m, "1948", { seed: 0 }).seededFrom).toBe("random");
+    expect(generate(m, "1947", { seed: 0 }).seededFrom).toBe("question");
+  });
+});

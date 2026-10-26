@@ -41,6 +41,9 @@ export const modelStats = (m) => ({ words: m.wordCount, vocab: m.vocab });
 // outside the text must stay unrecognised or the whole lesson collapses.
 export function resolveWord(model, word) {
   if (model.uni?.[word]) return { word, how: "exact" };
+  // A different year is a different question, never a typo to be helpful about: 1948 must not
+  // quietly become 1947. Numbers are exact or nothing.
+  if (/^\d+$/.test(word)) return null;
   // Stopwords carry no topic signal; loosening them only invents matches. Exact or nothing.
   if (STOPWORDS.has(word)) return null;
   const forms = model.forms || {};
