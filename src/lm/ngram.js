@@ -67,7 +67,9 @@ export function resolveWord(model, word) {
   if (/^\d+$/.test(word)) return null;
   // Stopwords carry no topic signal; loosening them only invents matches. Exact or nothing.
   if (STOPWORDS.has(word)) return null;
-  const { shape = {}, group = {} } = model.forms || {};
+  // The defaults are null-prototype too: a plain {} here would hand back Object.prototype.constructor
+  // for a hand-made model, the one case trainModel does not cover.
+  const { shape = table(), group = table() } = model.forms || {};
   // One hop, and only ever of one kind. The irregular table goes first, because a group member is
   // an exact lexical relation where a stripped ending is only a guess; then endings against
   // endings, which is how "ruling" has always reached "ruled". A group carries its verb's whole
