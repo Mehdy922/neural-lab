@@ -2,8 +2,8 @@
 // in-text topic look out-of-text. The one thing that must not break: a word genuinely outside a
 // bot's text stays unrecognised, so the hallucination beat survives.
 import { describe, it, expect } from "vitest";
-import { trainModel, coverage, resolveWord } from "./ngram.js";
-import { wordForms, editDistance, STOPWORDS } from "./tokenize.js";
+import { trainModel, coverage, generate, resolveWord } from "./ngram.js";
+import { wordForms, editDistance, STOPWORDS, tokenize, isWord } from "./tokenize.js";
 import { STARTER_TEXTS, HISTORY_TEXT } from "./texts/index.js";
 
 const history = trainModel(HISTORY_TEXT);
@@ -204,5 +204,43 @@ describe("coverage counts a corrected word as recognised", () => {
   it("is quiet on an empty model", () => {
     const empty = trainModel("");
     expect(coverage(empty, "anything")).toEqual({ known: 0, total: 1, knownWords: [], unknownWords: ["anything"], corrections: [] });
+  });
+});
+
+describe("generate seeds from the corrected word", () => {
+  // One sentence per start, and one continuation at every step, so the answer is fixed once the
+  // seed word is. That is the point: if resolution never reached the generator, "Dehli" would fall
+  // through to a random sentence start instead.
+  const TINY = "Mughal rulers made Delhi their capital city for many long years. Agra was a quiet town beside a wide river.";
+  const m = trainModel(TINY);
+  it("answers a misspelled question exactly as it answers the spelled one", () => {
+    const typo = generate(m, "Who ruled Dehli?", { seed: 0 });
+    const spelled = generate(m, "Who ruled Delhi?", { seed: 0 });
+    expect(spelled.seededFrom).toBe("question");
+    expect(typo.seededFrom).toBe("question");            // not "random": the correction reached the generator
+    expect(typo.text).toBe(spelled.text);
+    expect(typo.text.toLowerCase().startsWith("delhi their capital")).toBe(true);
+  });
+  it("seeds from a corrected word in the bigram pair scan too", () => {
+    const { text, seededFrom } = generate(m, "Tell me about the Mughul rulers", { seed: 0 });
+    expect(seededFrom).toBe("question");
+    expect(text.toLowerCase().startsWith("mughal rulers")).toBe(true);
+  });
+  it("leaves a question of foreign words alone", () => {
+    expect(generate(m, "What is biryani?", { seed: 0 }).seededFrom).toBe("random");
+  });
+  it("passes stopwords through unchanged", () => {
+    // "these" is one edit from "their", which is in this text, but stopwords are never corrected,
+    // so no "these ..." pair can be invented for the seed.
+    const { seededFrom } = generate(trainModel("Their capital was Delhi."), "Were these capital?", { seed: 0 });
+    expect(seededFrom).toBe("question");                 // from "capital" alone, not from a "these capital" pair
+  });
+  it("answers a real history question the same way whether or not the name is spelled right", () => {
+    const a = generate(history, "Who built the Taj Mahel?", { seed: 0 });
+    const b = generate(history, "Who built the Taj Mahal?", { seed: 0 });
+    expect(a.seededFrom).toBe("question");
+    const opening = (s) => tokenize(s).filter(isWord).slice(0, 2);
+    expect(opening(a.text)).toEqual(opening(b.text));    // the same seed pair, so the bot used the correction
+    expect(opening(a.text)).toEqual(["taj", "mahal"]);
   });
 });

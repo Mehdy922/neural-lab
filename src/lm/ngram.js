@@ -86,7 +86,10 @@ function pick(dist, rand, filter) {
 
 export function generate(model, question, { seed = 0, maxWords = 40, minWords = 8 } = {}) {
   const rand = mulberry32((hashString(String(question)) + seed) | 0);
-  const qTokens = tokenize(question).filter(isWord);
+  // Seed from the words the bot actually read, not the ones the student typed, or coverage would
+  // claim a word was recognised while the bot still could not use it. Stopwords pass through.
+  const read = (t) => (STOPWORDS.has(t) ? t : resolveWord(model, t)?.word || t);
+  const qTokens = tokenize(question).filter(isWord).map(read);
   let w1 = null, w2 = null, seededFrom = "random";
 
   // 1. The best adjacent pair of question words the model has seen together.
@@ -104,7 +107,7 @@ export function generate(model, question, { seed = 0, maxWords = 40, minWords = 
   if (best) { w1 = best.a; w2 = best.b; seededFrom = "question"; }
   // 2. The rarest known content word (most informative), then its most likely continuation.
   if (!w1) {
-    const cands = contentWords(question).filter((w) => model.uni[w] && model.bi[w]);
+    const cands = contentWords(question).map(read).filter((w) => model.uni[w] && model.bi[w]);
     if (cands.length) {
       cands.sort((x, y) => model.uni[x] - model.uni[y]);
       w1 = cands[0]; w2 = pick(model.bi[w1], rand, isWord); seededFrom = "question";
