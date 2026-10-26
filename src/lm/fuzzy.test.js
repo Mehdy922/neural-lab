@@ -47,6 +47,73 @@ describe("wordForms", () => {
   });
 });
 
+// ── irregular groups ─────────────────────────────────────────────────────────
+// Forms no spelling rule can reach. They matter twice over: the word-forms stage runs before the
+// typo stage, so a missing group is not only a silent miss — it leaves the typo stage free to
+// reach for a wrong real word, which is visible nonsense in front of a class.
+describe("a bot reads an irregular form of a word its text really contains", () => {
+  const bot = (id) => trainModel(STARTER_TEXTS.find((t) => t.id === id).text);
+
+  it("reads better as good on the cricket bot, not batter", () => {
+    expect(resolveWord(bot("cricket"), "better")).toEqual({ word: "good", how: "stem" });
+  });
+  it("reads child as children on the cooking bot, not chili", () => {
+    expect(resolveWord(bot("cooking"), "child")).toEqual({ word: "children", how: "stem" });
+  });
+  it("reads heard as hear on the history bot, not hard", () => {
+    expect(resolveWord(history, "heard")).toEqual({ word: "hear", how: "stem" });
+  });
+  it("reads threw as throw on the cricket bot, not three", () => {
+    expect(resolveWord(bot("cricket"), "threw")).toEqual({ word: "throw", how: "stem" });
+  });
+
+  // Both directions, because a student types whichever form the question wants while the text
+  // holds whichever form its own sentences wanted.
+  const PLURALS = [
+    ["biology", "child", "children"], ["biology", "tooth", "teeth"], ["biology", "leaf", "leaves"],
+    ["space", "man", "men"], ["space", "foot", "feet"], ["folktales", "person", "people"],
+    ["cooking", "knives", "knife"], ["cooking", "lives", "life"],
+  ];
+  it.each(PLURALS)("the %s bot reads %s as %s", (id, typed, read) => {
+    expect(resolveWord(bot(id), typed)).toEqual({ word: read, how: "stem" });
+  });
+
+  it("links good, better and best to one another, which a flat past-to-base map could not", () => {
+    for (const [a, b] of [["good", "better"], ["good", "best"], ["better", "good"],
+                          ["better", "best"], ["best", "good"], ["best", "better"]]) {
+      expect([...wordForms(a)], `${a} should reach ${b}`).toContain(b);
+    }
+    const cricket = bot("cricket");                  // its text says "good" and neither other form
+    expect(resolveWord(cricket, "better")?.word).toBe("good");
+    expect(resolveWord(cricket, "best")?.word).toBe("good");
+  });
+
+  it("keeps its three-letter members, which the stem floor would otherwise cut", () => {
+    for (const [word, form] of [["see", "saw"], ["men", "man"], ["ate", "eat"], ["sat", "sit"], ["pay", "paid"]]) {
+      expect([...wordForms(word)], word).toContain(form);
+    }
+  });
+
+  // The history text says "best" — "one of the best drainage systems", "best remembered for the
+  // Taj Mahal" — and never says "good", so the comparative group reaches it. This is the one
+  // demo question whose numbers moved; the coverage tests below say so in full.
+  it("reads better as best on the history bot, whose text says best and never good", () => {
+    expect(history.uni["good"]).toBeUndefined();
+    expect(history.uni["best"]).toBeDefined();
+    expect(resolveWord(history, "better")).toEqual({ word: "best", how: "stem" });
+  });
+
+  // The invariant, at the level of the new table. A group is only ever a bridge between forms of a
+  // word the text really holds; with no member in the text, every member stays foreign.
+  it("resolves nothing when the text holds no member of the group", () => {
+    for (const [id, w] of [["history", "geese"], ["history", "wolves"], ["history", "mice"],
+                           ["history", "swum"], ["cricket", "tomatoes"], ["cricket", "loaves"],
+                           ["cricket", "heroes"], ["biology", "potatoes"]]) {
+      expect(resolveWord(bot(id), w), `${id}: ${w} must stay unrecognised`).toBeNull();
+    }
+  });
+});
+
 describe("resolveWord against the history text", () => {
   // The 15 realistic ESL errors measured against this text by the validated prototype.
   const ESL = [
@@ -235,12 +302,24 @@ describe("coverage counts a corrected word as recognised", () => {
     expect(c.knownWords).toEqual(["built", "taj", "mahal"]);
     expect(c.unknownWords).toEqual([]);
   });
-  it("still recognises nothing in a question made of foreign words", () => {
+  // CHANGED by the irregular-group table. "better" was foreign to this bot only by accident: the
+  // history text says "best", and the comparative group now reaches it. The three topic words are
+  // still foreign, which is what this test was ever about, so the expectation is restated rather
+  // than the question quietly reworded, and the all-foreign case it used to stand for is pinned by
+  // the test below it.
+  it("recognises only the comparative when every topic word of the question is foreign", () => {
     const c = coverage(history, "Is biryani better than pizza or a samosa?");
+    expect(c.known).toBe(1);
+    expect(c.total).toBe(4);
+    expect(c.corrections).toEqual([{ typed: "better", read: "best" }]);
+    expect(c.unknownWords).toEqual(["biryani", "pizza", "samosa"]);
+  });
+  it("still recognises nothing in a question made of foreign words", () => {
+    const c = coverage(history, "Is biryani tastier than pizza or a samosa?");
     expect(c.known).toBe(0);
     expect(c.total).toBe(4);
     expect(c.corrections).toEqual([]);
-    expect(c.unknownWords).toEqual(["biryani", "better", "pizza", "samosa"]);
+    expect(c.unknownWords).toEqual(["biryani", "tastier", "pizza", "samosa"]);
   });
   it("is quiet on an empty model", () => {
     const empty = trainModel("");
@@ -302,10 +381,20 @@ describe("a word that reads as a stopword carries no topic signal", () => {
     expect(c.unknownWords).toEqual(["photosynthesis"]);
     expect(c.corrections).toEqual([]);             // nothing worth telling a student about
   });
-  it("leaves the climax intact when every real word is foreign", () => {
+  // CHANGED by the irregular-group table, for the same reason as the coverage test above: on this
+  // bot "better" now reads as "best". What this test actually pins is the misspelled stopword
+  // dropping out, which is unmoved; the climax itself is pinned by the test after it, on a
+  // question whose every real word is genuinely foreign.
+  it("drops the misspelled stopword and leaves the one in-text word recognised", () => {
     const c = coverage(history, "Wich is better, biryani or pizza?");
+    expect(c.known).toBe(1);                       // "better" reads as "best", which this text says
+    expect(c.total).toBe(3);                       // better, biryani, pizza: "wich" reads as "with"
+    expect(c.corrections).toEqual([{ typed: "better", read: "best" }]);
+  });
+  it("leaves the climax intact when every real word is foreign", () => {
+    const c = coverage(history, "Wich is tastier, biryani or pizza?");
     expect(c.known).toBe(0);                       // the line must still read "It recognised none of your words"
-    expect(c.total).toBe(3);                       // better, biryani, pizza
+    expect(c.total).toBe(3);                       // tastier, biryani, pizza
     expect(c.corrections).toEqual([]);
   });
   it("never seeds the generator from a misspelled stopword", () => {

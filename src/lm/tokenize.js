@@ -35,17 +35,49 @@ export function contentWords(text) {
 // Students type English on phones. These two helpers let the model look past an ending or a slip
 // of the thumb. They know nothing about any model; ngram.js decides what to do with them.
 
-// The irregular verbs a 2,000-word school text actually uses, written as groups rather than a flat
-// past -> base map: every member resolves to every other. Looked up in both directions, so a text
-// that says "built" also answers to "build", and a text that says "build" answers to "built".
+// Forms no spelling rule can reach, written as groups rather than a flat past -> base map: every
+// member resolves to every other. Looked up in both directions, so a text that says "built" also
+// answers to "build", a text that says "children" answers to "child", and good / better / best all
+// reach one another, which a past -> base map could not say at all.
+//
+// Every member is an index key, and a key is a free hit for anyone who types it exactly, so this
+// table is closed and hand-written rather than ruled. The -ves and -oes plurals are enumerated for
+// that reason: a general -ves rule manufactures keys out of ordinary verbs, and some of that junk
+// is a real word — "serves" would key "serf", so a student typing "serf" would resolve against a
+// text that merely says "serves". The English -f noun class is small and closed, so it is listed.
+//
+// Accepted collisions: `left` is also a direction, `mean` is also unkind, `felt` is also a fabric,
+// `saw` is also a tool, `rose` is also a flower. Resolution can only ever land on a word the text
+// really contains, so the cost is the bot seeding from a neighbouring sense, never an invented
+// word, and disambiguating a 2,000-word text would cost more than the sense it would save.
 const IRREGULAR_GROUPS = [
-  // irregular verbs
-  ["build", "built"], ["fight", "fought"], ["win", "won"], ["take", "took"], ["begin", "began"],
-  ["make", "made"], ["write", "wrote"], ["come", "came"], ["give", "gave"], ["lead", "led"],
-  ["send", "sent"], ["lose", "lost"], ["hold", "held"], ["bring", "brought"], ["buy", "bought"],
-  ["teach", "taught"], ["catch", "caught"], ["fall", "fell"], ["grow", "grew"], ["know", "knew"],
-  ["run", "ran"], ["say", "said"], ["see", "saw"], ["speak", "spoke"], ["tell", "told"],
-  ["think", "thought"],
+  // irregular verbs, with the past participle wherever one is in everyday use
+  ["build", "built"], ["fight", "fought"], ["win", "won"], ["make", "made"], ["come", "came"],
+  ["lead", "led"], ["send", "sent"], ["lose", "lost"], ["hold", "held"], ["bring", "brought"],
+  ["buy", "bought"], ["teach", "taught"], ["catch", "caught"], ["run", "ran"], ["say", "said"],
+  ["tell", "told"], ["think", "thought"], ["sit", "sat"], ["stand", "stood"], ["keep", "kept"],
+  ["leave", "left"], ["pay", "paid"], ["hear", "heard"], ["understand", "understood"],
+  ["feel", "felt"], ["mean", "meant"], ["spend", "spent"], ["meet", "met"], ["find", "found"],
+  ["write", "wrote", "written"], ["take", "took", "taken"], ["give", "gave", "given"],
+  ["know", "knew", "known"], ["grow", "grew", "grown"], ["see", "saw", "seen"],
+  ["fall", "fell", "fallen"], ["speak", "spoke", "spoken"], ["begin", "began", "begun"],
+  ["eat", "ate", "eaten"], ["fly", "flew", "flown"], ["throw", "threw", "thrown"],
+  ["swim", "swam", "swum"], ["drink", "drank", "drunk"], ["sing", "sang", "sung"],
+  ["ring", "rang", "rung"], ["draw", "drew", "drawn"], ["rise", "rose", "risen"],
+  ["choose", "chose", "chosen"],
+  // irregular noun plurals: the topic-bearing win, and what the biology, cooking and folktales
+  // bots were missing entirely
+  ["child", "children"], ["person", "people"], ["man", "men"], ["woman", "women"],
+  ["foot", "feet"], ["tooth", "teeth"], ["mouse", "mice"], ["goose", "geese"],
+  // -f and -fe nouns that pluralise in -ves: a small closed class, enumerated, never ruled
+  ["leaf", "leaves"], ["knife", "knives"], ["life", "lives"], ["wife", "wives"],
+  ["wolf", "wolves"], ["thief", "thieves"], ["shelf", "shelves"], ["half", "halves"],
+  ["loaf", "loaves"], ["calf", "calves"],
+  // -o nouns that pluralise in -oes, enumerated for the same reason
+  ["potato", "potatoes"], ["tomato", "tomatoes"], ["mango", "mangoes"], ["hero", "heroes"],
+  // comparatives, which are what stops "better" reaching "batter" on the cricket bot.
+  // many / more / most are already stopwords, so they are left alone.
+  ["good", "better", "best"], ["bad", "worse", "worst"], ["little", "less", "least"],
 ];
 
 // member -> its whole group, built once at load. The table used to be re-scanned with
