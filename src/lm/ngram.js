@@ -62,15 +62,19 @@ export function resolveWord(model, word) {
   // Stopwords carry no topic signal; loosening them only invents matches. Exact or nothing.
   if (STOPWORDS.has(word)) return null;
   const { shape = {}, group = {} } = model.forms || {};
-  // One hop, never two of different kinds. The irregular table goes first, because a group member
-  // is an exact lexical relation where a stripped ending is only a guess. Then endings against
-  // endings, which is how "ruling" has always reached "ruled". Last, a group member against a
-  // word the text happens to spell with an ending, which is how "flew" reaches "flies".
-  // The missing fourth pass is the point: a stripped ending may never reach a group key, because
-  // that is the chain that stripped "leaves" to "leave" and crossed the group to "left".
+  // One hop, and only ever of one kind. The irregular table goes first, because a group member is
+  // an exact lexical relation where a stripped ending is only a guess; then endings against
+  // endings, which is how "ruling" has always reached "ruled". A group carries its verb's whole
+  // paradigm, so the group pass alone already reaches whichever form the text happens to use:
+  // "flew" finds "flies" here, not by any later pass.
+  //
+  // The two kinds are never crossed, in either direction, and that is the whole guard. Crossing
+  // them one way stripped "leaves" to "leave" and jumped the group to "left", answering foliage
+  // with a direction. Crossing them the other way let a group member reach any word that merely
+  // ends the same: a text saying only "founded" answered "find", and one saying only "ranges"
+  // answered "ring". Neither is a form of the other.
   for (const form of groupForms(word)) if (group[form]) return { word: group[form], how: "stem" };
   for (const form of shapeForms(word)) if (shape[form]) return { word: shape[form], how: "stem" };
-  for (const form of groupForms(word)) if (shape[form]) return { word: shape[form], how: "stem" };
   if (word.length < 4) return null;                      // too short for one edit to mean anything
   // One edit, at every length. Every measured ESL error is a single edit once a transposition
   // counts as one, so a second edit buys nothing and only lets a real word reach a different real

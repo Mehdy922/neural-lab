@@ -142,6 +142,29 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(resolveWord(cricket, "ran")).toEqual({ word: "run", how: "stem" });
     expect(space.uni["sit"]).toBeDefined();
     expect(resolveWord(space, "sat")).toEqual({ word: "sit", how: "stem" });
+
+  });
+
+  // A group member must not reach a word the text merely spells with an ending. "founded" is not
+  // a form of "find" and "ranges" is not a form of "ring", and a Part 2 team can write either into
+  // their own text. The typed word's group is run against group keys and its endings against
+  // ending keys; the two are never crossed, in either direction.
+  it("does not let a group member reach a word that merely ends the same way", () => {
+    const founded = trainModel("The city was founded long ago. People founded it beside a river.");
+    for (const w of ["find", "finds", "finding"]) expect(resolveWord(founded, w), w).toBeNull();
+    const ranges = trainModel("The mountain ranges climb in the north. These ranges are old.");
+    for (const w of ["ring", "rings", "ringing", "rung"]) expect(resolveWord(ranges, w), w).toBeNull();
+    const spokes = trainModel("The wheel spokes were made of wood. Spokes hold the rim.");
+    expect(resolveWord(spokes, "speak")).toBeNull();
+  });
+
+  // The pass that crossed them was justified by these four, and the justification was wrong: the
+  // group carries the regular forms now, so every one of them comes from the group pass alone.
+  it("still reaches the regular form a text uses, through the group pass alone", () => {
+    expect(resolveWord(bot("cricket"), "flew")).toEqual({ word: "flies", how: "stem" });
+    expect(resolveWord(bot("space"), "sat")).toEqual({ word: "sit", how: "stem" });
+    expect(resolveWord(bot("cooking"), "felt")).toEqual({ word: "feels", how: "stem" });
+    expect(resolveWord(bot("cooking"), "meant")).toEqual({ word: "means", how: "stem" });
   });
 
   // A possessive is punctuation, not morphology, so it is stripped before any form is derived.
