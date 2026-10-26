@@ -144,6 +144,14 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(resolveWord(space, "sat")).toEqual({ word: "sit", how: "stem" });
   });
 
+  // A possessive is punctuation, not morphology, so it is stripped before any form is derived.
+  // That is all "child's" needs in order to reach "children": one group hop, nothing chained.
+  it("strips a possessive before deriving forms, so child's reaches children", () => {
+    expect(resolveWord(bot("biology"), "child's")).toEqual({ word: "children", how: "stem" });
+    expect(resolveWord(bot("cooking"), "child's")).toEqual({ word: "children", how: "stem" });
+    expect([...wordForms("akbar's")]).toContain("akbar");
+    expect([...wordForms("akbar's")]).not.toContain("akbar'");   // stripping the s alone left junk
+  });
 
   // A word written into two groups would silently take only the later one, because the
   // member -> group Map keeps one entry per member. "leaves" is the live example: it is a leaf,

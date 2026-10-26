@@ -138,8 +138,14 @@ for (const group of IRREGULAR_GROUPS) for (const member of group) IRREGULAR.set(
 // would carry it on to "left" — a question about foliage answered with a direction. Keeping the
 // halves apart here lets ngram.js index them apart, which is where the chain is actually broken.
 
-// What a spelling rule derives: the word itself, its possessive stripped, its plural and tense
-// endings. Nothing from the irregular table.
+// A possessive is punctuation, not morphology. It is normalised away before anything is derived,
+// rather than being one derivation among the others: "child's" is simply the word "child", and
+// reaches "children" by a single group hop with nothing chained. Stripping it first also stops
+// the plural rule firing on the apostrophe and indexing "akbar'".
+const bare = (word) => word.replace(/'s$/, "");
+
+// What a spelling rule derives: the normalised word and its plural and tense endings. Nothing
+// from the irregular table.
 export function shapeForms(word) {
   const out = new Set([word]);
   // Three letters minimum: stripping "-ed" twice over leaves fragments like "us" from "used" or
@@ -147,8 +153,8 @@ export function shapeForms(word) {
   // on a word nobody typed. The word itself is added above, so a short vocabulary word still
   // indexes itself.
   const add = (s) => { if (s && s.length >= 3) out.add(s); };
-  const w = word;
-  add(w.replace(/'s$/, ""));
+  const w = bare(word);
+  add(w);
   if (/ies$/.test(w) && w.length > 4) add(w.slice(0, -3) + "y");                   // cities -> city
   if (/(sses|shes|ches|xes|zes)$/.test(w)) add(w.slice(0, -2));                    // wishes -> wish
   if (/s$/.test(w) && !/ss$/.test(w) && w.length > 3) add(w.slice(0, -1));
@@ -158,12 +164,12 @@ export function shapeForms(word) {
   return out;
 }
 
-// What the irregular table says: the group `word` belongs to, itself included, and nothing else.
-// Never the group of a form a suffix rule derived. The same three-letter floor applies, though no
-// group member is shorter than three letters, so it never cuts one.
+// What the irregular table says: the group the normalised `word` belongs to, itself included,
+// and nothing else. Never the group of a form a suffix rule derived. The same three-letter floor
+// applies, though no group member is shorter than three letters, so it never cuts one.
 export function groupForms(word) {
   const out = new Set();
-  for (const member of IRREGULAR.get(word) || []) if (member.length >= 3) out.add(member);
+  for (const member of IRREGULAR.get(bare(word)) || []) if (member.length >= 3) out.add(member);
   return out;
 }
 
