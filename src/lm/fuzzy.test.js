@@ -336,12 +336,26 @@ describe("two-letter fragments are not indexed as stems", () => {
   });
   it("keeps the climax line on the most natural thing a class types", () => {
     const c = coverage(history, "Tell us about biryani");
-    expect(c.total).toBe(2);                               // us, biryani
+    expect(c.total).toBe(1);                               // biryani alone: "us" is a stopword
     expect(c.known).toBe(0);
     expect(c.corrections).toEqual([]);
   });
   it("still resolves every stem that matters", () => {
     expect(resolveWord(history, "die")).toEqual({ word: "died", how: "stem" });
     expect(resolveWord(history, "mughals")).toEqual({ word: "mughal", how: "stem" });
+  });
+});
+
+describe("us is a pronoun, in every text", () => {
+  it("is a stopword, so it carries no topic signal anywhere", () => {
+    expect(STOPWORDS.has("us")).toBe(true);
+  });
+  it("is dropped even by a bot whose text really contains the word", () => {
+    const space = trainModel(STARTER_TEXTS.find((t) => t.id === "space").text);
+    expect(space.uni["us"]).toBeDefined();          // the space text does say "us"
+    const c = coverage(space, "Tell us about Ronaldo");
+    expect(c.total).toBe(1);                        // ronaldo alone
+    expect(c.known).toBe(0);
+    expect(c.corrections).toEqual([]);
   });
 });

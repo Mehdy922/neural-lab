@@ -2,7 +2,7 @@
 
 export const STOPWORDS = new Set(("a an the and or but if then so of to in on at by for from with about as into like through " +
   "is are was were be been being am do does did doing have has had having will would shall should can could may might must " +
-  "i me my we our you your he him his she her it its they them their this that these those there here who whom whose which what " +
+  "i me my we us our you your he him his she her it its they them their this that these those there here who whom whose which what " +
   "when where why how all any both each few more most other some such no nor not only own same than too very just also " +
   "up down out over under again further once because while until during before after above below off yes please tell explain many much make made does get got").split(" "));
 
