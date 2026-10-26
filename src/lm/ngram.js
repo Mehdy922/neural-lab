@@ -1,9 +1,20 @@
 // A word-level trigram language model with backoff. This is honestly what runs in the app:
 // the bot predicts the next word from counts of what it has read. Nothing else.
 import { mulberry32 } from "../ml/net.js";
-import { tokenize, contentWords, detokenize, hashString, isWord, isEnd, STOPWORDS } from "./tokenize.js";
+import { tokenize, contentWords, detokenize, hashString, isWord, isEnd, STOPWORDS, wordForms, editDistance } from "./tokenize.js";
 
 const bump = (obj, k) => { obj[k] = (obj[k] || 0) + 1; };
+
+// Words the model can be asked about: real words, no sentence ends. Built once, at train time.
+const vocabularyOf = (uni) => Object.keys(uni).filter((w) => /^[a-z0-9']+$/.test(w));
+
+// Every form of every vocabulary word, pointing back at the vocabulary word. Ties go to the more
+// frequent word, so "build" lands on whichever of build/built the text actually leans on.
+function indexForms(uni, vocabWords) {
+  const forms = {};
+  for (const w of vocabWords) for (const form of wordForms(w)) if (!forms[form] || uni[w] > uni[forms[form]]) forms[form] = w;
+  return forms;
+}
 
 export function trainModel(text) {
   const tokens = tokenize(text);
@@ -19,10 +30,32 @@ export function trainModel(text) {
   }
   const wordCount = tokens.filter(isWord).length;
   const vocab = Object.keys(uni).filter(isWord).length;
-  return { order: 3, tokenCount: tokens.length, wordCount, vocab, uni, bi, tri, starts };
+  const vocabWords = vocabularyOf(uni);
+  return { order: 3, tokenCount: tokens.length, wordCount, vocab, uni, bi, tri, starts, vocabWords, forms: indexForms(uni, vocabWords) };
 }
 
 export const modelStats = (m) => ({ words: m.wordCount, vocab: m.vocab });
+
+// The word of the model's vocabulary a student meant, or null if the model has never read anything
+// like it. Exact first, then an ending, then one or two typos. Err toward missing: a word genuinely
+// outside the text must stay unrecognised or the whole lesson collapses.
+export function resolveWord(model, word) {
+  if (model.uni?.[word]) return { word, how: "exact" };
+  // Stopwords carry no topic signal; loosening them only invents matches. Exact or nothing.
+  if (STOPWORDS.has(word)) return null;
+  const forms = model.forms || {};
+  for (const form of wordForms(word)) if (forms[form]) return { word: forms[form], how: "stem" };
+  if (word.length < 4) return null;                      // too short for one edit to mean anything
+  const cap = word.length >= 8 ? 2 : 1;
+  let best = null;
+  for (const candidate of model.vocabWords || []) {
+    if (candidate[0] !== word[0] || Math.abs(candidate.length - word.length) > 1) continue;
+    const d = editDistance(word, candidate, cap);
+    if (d > cap) continue;
+    if (!best || d < best.d || (d === best.d && model.uni[candidate] > model.uni[best.word])) best = { word: candidate, d };
+  }
+  return best ? { word: best.word, how: "fuzzy" } : null;
+}
 
 export function coverage(model, question) {
   const words = contentWords(question);

@@ -31,6 +31,55 @@ export function contentWords(text) {
   return out;
 }
 
+// ── forgiving matching: word shapes ──────────────────────────────────────────
+// Students type English on phones. These two helpers let the model look past an ending or a slip
+// of the thumb. They know nothing about any model; ngram.js decides what to do with them.
+
+// The irregular verbs a 2,000-word school text actually uses. Looked up in both directions, so a
+// text that says "built" also answers to "build", and a text that says "build" answers to "built".
+const IRREGULAR = { built: "build", fought: "fight", won: "win", took: "take", began: "begin", made: "make",
+  wrote: "write", came: "come", gave: "give", led: "lead", sent: "send", lost: "lose", held: "hold",
+  brought: "bring", bought: "buy", taught: "teach", caught: "catch", fell: "fall", grew: "grow",
+  knew: "know", ran: "run", said: "say", saw: "see", spoke: "speak", told: "tell", thought: "think" };
+
+// Every form of `word` worth looking up, including `word` itself. Deliberately small: plurals,
+// possessives, past and present participles, and the irregular verbs above.
+export function wordForms(word) {
+  const out = new Set([word]);
+  const add = (s) => { if (s && s.length >= 2) out.add(s); };
+  add(word.replace(/'s$/, ""));
+  if (IRREGULAR[word]) add(IRREGULAR[word]);
+  for (const [past, base] of Object.entries(IRREGULAR)) if (base === word) add(past);
+  if (/ies$/.test(word) && word.length > 4) add(word.slice(0, -3) + "y");          // cities -> city
+  if (/(sses|shes|ches|xes|zes)$/.test(word)) add(word.slice(0, -2));              // wishes -> wish
+  if (/s$/.test(word) && !/ss$/.test(word) && word.length > 3) add(word.slice(0, -1));
+  if (/es$/.test(word) && word.length > 4) add(word.slice(0, -2));
+  if (/ed$/.test(word) && word.length > 3) { add(word.slice(0, -2)); add(word.slice(0, -1)); }  // ruled -> rule, died -> die
+  if (/ing$/.test(word) && word.length > 5) { add(word.slice(0, -3)); add(word.slice(0, -3) + "e"); }
+  return out;
+}
+
+// Damerau-Levenshtein distance, capped. A transposition counts as one edit, which is what makes
+// "dehli" and "biult" work — by far the most common typo class. Returns cap + 1 once it is clear
+// the words are further apart than `cap`, so the walk can stop early.
+export function editDistance(a, b, cap) {
+  if (Math.abs(a.length - b.length) > cap) return cap + 1;
+  const d = [];
+  for (let i = 0; i <= a.length; i++) d[i] = [i];
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let rowMin = Infinity;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      if (d[i][j] < rowMin) rowMin = d[i][j];
+    }
+    if (rowMin > cap) return cap + 1;
+  }
+  return d[a.length][b.length];
+}
+
 export function detokenize(tokens) {
   let s = "";
   let capNext = true;
