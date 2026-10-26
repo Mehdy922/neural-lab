@@ -323,3 +323,25 @@ describe("numbers are matched by exact spelling only", () => {
     expect(generate(m, "1947", { seed: 0 }).seededFrom).toBe("question");
   });
 });
+
+// ── a stem key must be a word, not a fragment ────────────────────────────────
+describe("two-letter fragments are not indexed as stems", () => {
+  it("does not put a fragment of a vocabulary word into the index", () => {
+    expect([...wordForms("used")]).not.toContain("us");    // "-ed" stripped twice over leaves a fragment
+    expect([...wordForms("died")]).toContain("die");       // three letters: a real word, still indexed
+    expect([...wordForms("fled")]).not.toContain("fl");
+  });
+  it("does not read us as used", () => {
+    expect(resolveWord(history, "us")).toBeNull();
+  });
+  it("keeps the climax line on the most natural thing a class types", () => {
+    const c = coverage(history, "Tell us about biryani");
+    expect(c.total).toBe(2);                               // us, biryani
+    expect(c.known).toBe(0);
+    expect(c.corrections).toEqual([]);
+  });
+  it("still resolves every stem that matters", () => {
+    expect(resolveWord(history, "die")).toEqual({ word: "died", how: "stem" });
+    expect(resolveWord(history, "mughals")).toEqual({ word: "mughal", how: "stem" });
+  });
+});

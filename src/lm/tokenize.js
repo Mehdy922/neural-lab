@@ -46,7 +46,11 @@ const IRREGULAR = { built: "build", fought: "fight", won: "win", took: "take", b
 // possessives, past and present participles, and the irregular verbs above.
 export function wordForms(word) {
   const out = new Set([word]);
-  const add = (s) => { if (s && s.length >= 2) out.add(s); };
+  // Three letters minimum: stripping "-ed" twice over leaves fragments like "us" from "used" or
+  // "fl" from "fled", and the stem path has none of the fuzzy guards, so such a key is a free hit
+  // on a word nobody typed. The word itself is added above, so a short vocabulary word still
+  // indexes itself.
+  const add = (s) => { if (s && s.length >= 3) out.add(s); };
   add(word.replace(/'s$/, ""));
   if (IRREGULAR[word]) add(IRREGULAR[word]);
   for (const [past, base] of Object.entries(IRREGULAR)) if (base === word) add(past);
