@@ -1,19 +1,25 @@
 // A word-level trigram language model with backoff. This is honestly what runs in the app:
 // the bot predicts the next word from counts of what it has read. Nothing else.
 import { mulberry32 } from "../ml/net.js";
-import { tokenize, contentWords, detokenize, hashString, isWord, isEnd, STOPWORDS, wordForms, editDistance } from "./tokenize.js";
+import { tokenize, contentWords, detokenize, hashString, isWord, isEnd, STOPWORDS, shapeForms, groupForms, editDistance } from "./tokenize.js";
 
 const bump = (obj, k) => { obj[k] = (obj[k] || 0) + 1; };
 
 // Words the model can be asked about: real words, no sentence ends. Built once, at train time.
 const vocabularyOf = (uni) => Object.keys(uni).filter((w) => /^[a-z0-9']+$/.test(w));
 
-// Every form of every vocabulary word, pointing back at the vocabulary word. Ties go to the more
-// frequent word, so "build" lands on whichever of build/built the text actually leans on.
+// Every form of every vocabulary word, pointing back at the vocabulary word. Two indexes, not
+// one, so that a key a suffix rule derived and a key the irregular table derived can be told
+// apart at lookup time. Ties go to the more frequent word, so "build" lands on whichever of
+// build/built the text actually leans on; an exact tie goes to whichever the text says first.
 function indexForms(uni, vocabWords) {
-  const forms = {};
-  for (const w of vocabWords) for (const form of wordForms(w)) if (!forms[form] || uni[w] > uni[forms[form]]) forms[form] = w;
-  return forms;
+  const shape = {}, group = {};
+  const claim = (index, form, w) => { if (!index[form] || uni[w] > uni[index[form]]) index[form] = w; };
+  for (const w of vocabWords) {
+    for (const form of shapeForms(w)) claim(shape, form, w);
+    for (const form of groupForms(w)) claim(group, form, w);
+  }
+  return { shape, group };
 }
 
 export function trainModel(text) {
@@ -46,8 +52,16 @@ export function resolveWord(model, word) {
   if (/^\d+$/.test(word)) return null;
   // Stopwords carry no topic signal; loosening them only invents matches. Exact or nothing.
   if (STOPWORDS.has(word)) return null;
-  const forms = model.forms || {};
-  for (const form of wordForms(word)) if (forms[form]) return { word: forms[form], how: "stem" };
+  const { shape = {}, group = {} } = model.forms || {};
+  // One hop, never two of different kinds. The irregular table goes first, because a group member
+  // is an exact lexical relation where a stripped ending is only a guess. Then endings against
+  // endings, which is how "ruling" has always reached "ruled". Last, a group member against a
+  // word the text happens to spell with an ending, which is how "flew" reaches "flies".
+  // The missing fourth pass is the point: a stripped ending may never reach a group key, because
+  // that is the chain that stripped "leaves" to "leave" and crossed the group to "left".
+  for (const form of groupForms(word)) if (group[form]) return { word: group[form], how: "stem" };
+  for (const form of shapeForms(word)) if (shape[form]) return { word: shape[form], how: "stem" };
+  for (const form of groupForms(word)) if (shape[form]) return { word: shape[form], how: "stem" };
   if (word.length < 4) return null;                      // too short for one edit to mean anything
   // One edit, at every length. Every measured ESL error is a single edit once a transposition
   // counts as one, so a second edit buys nothing and only lets a real word reach a different real

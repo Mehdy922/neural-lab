@@ -91,23 +91,45 @@ const IRREGULAR_GROUPS = [
 const IRREGULAR = new Map();
 for (const group of IRREGULAR_GROUPS) for (const member of group) IRREGULAR.set(member, group);
 
-// Every form of `word` worth looking up, including `word` itself. Deliberately small: plurals,
-// possessives, past and present participles, and the irregular groups above.
-export function wordForms(word) {
+// The two kinds of form are built separately and must stay that way. One hop of either kind is a
+// safe guess; one of each, chained, is not. "leaves" strips to "leave", and the leave/left group
+// would carry it on to "left" — a question about foliage answered with a direction. Keeping the
+// halves apart here lets ngram.js index them apart, which is where the chain is actually broken.
+
+// What a spelling rule derives: the word itself, its possessive stripped, its plural and tense
+// endings. Nothing from the irregular table.
+export function shapeForms(word) {
   const out = new Set([word]);
   // Three letters minimum: stripping "-ed" twice over leaves fragments like "us" from "used" or
   // "fl" from "fled", and the stem path has none of the fuzzy guards, so such a key is a free hit
   // on a word nobody typed. The word itself is added above, so a short vocabulary word still
-  // indexes itself. No group member is shorter than three letters, so the floor never cuts one.
+  // indexes itself.
   const add = (s) => { if (s && s.length >= 3) out.add(s); };
   add(word.replace(/'s$/, ""));
-  for (const member of IRREGULAR.get(word) || []) add(member);
   if (/ies$/.test(word) && word.length > 4) add(word.slice(0, -3) + "y");          // cities -> city
   if (/(sses|shes|ches|xes|zes)$/.test(word)) add(word.slice(0, -2));              // wishes -> wish
   if (/s$/.test(word) && !/ss$/.test(word) && word.length > 3) add(word.slice(0, -1));
   if (/es$/.test(word) && word.length > 4) add(word.slice(0, -2));
   if (/ed$/.test(word) && word.length > 3) { add(word.slice(0, -2)); add(word.slice(0, -1)); }  // ruled -> rule, died -> die
   if (/ing$/.test(word) && word.length > 5) { add(word.slice(0, -3)); add(word.slice(0, -3) + "e"); }
+  return out;
+}
+
+// What the irregular table says: the group `word` belongs to, itself included, and nothing else.
+// Never the group of a form a suffix rule derived. The same three-letter floor applies, though no
+// group member is shorter than three letters, so it never cuts one.
+export function groupForms(word) {
+  const out = new Set();
+  for (const member of IRREGULAR.get(word) || []) if (member.length >= 3) out.add(member);
+  return out;
+}
+
+// Every form of `word` worth looking up, the two halves together. ngram.js uses the halves,
+// because it has to keep them apart; this is for callers that simply want the whole set.
+export function wordForms(word) {
+  const out = new Set([word]);
+  for (const member of groupForms(word)) out.add(member);
+  for (const form of shapeForms(word)) out.add(form);
   return out;
 }
 

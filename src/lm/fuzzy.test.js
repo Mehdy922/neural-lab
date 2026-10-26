@@ -118,6 +118,20 @@ describe("a bot reads an irregular form of a word its text really contains", () 
     expect(resolveWord(history, "good")).toBeNull();
   });
 
+  // One hop, never two. "leaves" strips to "leave", and the leave/left group would have carried
+  // it on to "left" — a question about foliage answered with a direction. A stripped ending may
+  // no longer reach a key the irregular table put in the index.
+  it("reads leaves as leaf, and never as left", () => {
+    const biology = bot("biology"), folktales = bot("folktales");
+    expect(biology.uni["leaves"]).toBeDefined();
+    expect(resolveWord(biology, "leaf")).toEqual({ word: "leaves", how: "stem" });  // the direct group hop stays
+    for (const [id, m] of [["history", history], ["folktales", folktales]]) {
+      expect(m.uni["left"], id).toBeDefined();                  // the text holds the direction word
+      expect(m.uni["leaf"], id).toBeUndefined();
+      expect(m.uni["leaves"], id).toBeUndefined();
+      expect(resolveWord(m, "leaves"), id).toBeNull();          // and "leaves" must not reach it
+    }
+  });
 
   // The invariant, at the level of the new table. A group is only ever a bridge between forms of a
   // word the text really holds; with no member in the text, every member stays foreign.
