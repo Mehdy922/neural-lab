@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import { BotChat } from "./BotChat.jsx";
+import { BotChat, CoverageLine } from "./BotChat.jsx";
 import { trainModel } from "../lm/ngram.js";
 
 const model = trainModel("Akbar ruled the Mughal empire from Agra. Akbar built a new city. The Mughal empire grew under Akbar. Babur founded the Mughal empire. Shah Jahan built the Taj Mahal at Agra.");
@@ -80,5 +80,50 @@ describe("BotChat", () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(600); });
       expect(screen.queryByText(/is typing/)).toBeNull();
     } finally { vi.useRealTimers(); }
+  });
+});
+
+describe("CoverageLine corrections", () => {
+  it("reads exactly as it does today when nothing was corrected", () => {
+    render(<CoverageLine known={3} total={3} corrections={[]} />);
+    expect(screen.getByText("Recognised 3 of 3 words in your question.")).toBeTruthy();
+  });
+  it("names the word it read instead, for one correction", () => {
+    render(<CoverageLine known={3} total={3} corrections={[{ typed: "mahel", read: "mahal" }]} />);
+    expect(screen.getByText("Recognised 3 of 3 words in your question. (Read “Mahel” as “Mahal”.)")).toBeTruthy();
+  });
+  it("names both, for two corrections", () => {
+    render(<CoverageLine known={4} total={4} corrections={[{ typed: "mughals", read: "mughal" }, { typed: "dehli", read: "delhi" }]} />);
+    expect(screen.getByText("Recognised 4 of 4 words in your question. (Read “Mughals” as “Mughal”. Read “Dehli” as “Delhi”.)")).toBeTruthy();
+  });
+  it("counts them instead, from three corrections up", () => {
+    const corrections = [{ typed: "mughals", read: "mughal" }, { typed: "dehli", read: "delhi" }, { typed: "akber", read: "akbar" }];
+    render(<CoverageLine known={3} total={3} corrections={corrections} />);
+    expect(screen.getByText("Recognised 3 of 3 words in your question. (Read 3 words as their closest match.)")).toBeTruthy();
+  });
+  it("says nothing about corrections when it recognised none of the words", () => {
+    render(<CoverageLine known={0} total={2} corrections={[]} />);
+    expect(screen.getByText("It recognised none of your words. It answered anyway.")).toBeTruthy();
+  });
+  it("renders nothing when the question had no content words", () => {
+    const { container } = render(<CoverageLine known={0} total={0} corrections={[]} />);
+    expect(container.firstChild).toBeNull();
+  });
+  it("uses no jargon a student would not recognise", () => {
+    render(<CoverageLine known={3} total={3} corrections={[{ typed: "mahel", read: "mahal" }]} />);
+    expect(document.body.textContent).not.toMatch(/fuzzy|stem|token|Levenshtein|match the/i);
+  });
+});
+
+describe("BotChat shows the corrections", () => {
+  it("appends what it read to the coverage line after a misspelled question", () => {
+    render(<BotChat model={model} requireVote={false} requireTopic={false} typingMs={0} />);
+    ask("Who built the Taj Mahel?");
+    expect(screen.getByText("Recognised 3 of 3 words in your question. (Read “Mahel” as “Mahal”.)")).toBeTruthy();
+  });
+  it("leaves the line alone when every word was spelled right", () => {
+    render(<BotChat model={model} requireVote={false} requireTopic={false} typingMs={0} />);
+    ask("Who built the Taj Mahal?");
+    expect(screen.getByText("Recognised 3 of 3 words in your question.")).toBeTruthy();
   });
 });

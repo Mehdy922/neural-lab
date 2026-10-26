@@ -8,9 +8,19 @@ const coverageColor = (known, total) => {
   return r >= 0.6 ? C.leaf : r >= 0.3 ? C.mangoDeep : C.red;
 };
 
-export function CoverageLine({ known, total }) {
+const titled = (w) => String(w).charAt(0).toUpperCase() + String(w).slice(1);
+
+// What the bot read instead of what was typed. Two at most, then a count: the point is that
+// students see a dumb lookup, not that they read a list.
+const readAs = (corrections) => {
+  if (!corrections.length) return "";
+  if (corrections.length > 2) return ` (Read ${corrections.length} words as their closest match.)`;
+  return ` (${corrections.map((c) => `Read “${titled(c.typed)}” as “${titled(c.read)}”.`).join(" ")})`;
+};
+
+export function CoverageLine({ known, total, corrections = [] }) {
   if (!total) return null;
-  const text = known === 0 ? "It recognised none of your words. It answered anyway." : `Recognised ${known} of ${total} words in your question.`;
+  const text = known === 0 ? "It recognised none of your words. It answered anyway." : `Recognised ${known} of ${total} words in your question.${readAs(corrections)}`;
   return <div style={{ ...S.coverage, color: coverageColor(known, total) }}>{text}</div>;
 }
 
@@ -92,7 +102,7 @@ export function BotChat({ model, botName = "HistoryBot", requireTopic = true, re
               <div style={S.bubbleA}>
                 <div style={S.bubbleWho}><span aria-hidden="true">🤖</span> {botName}</div>
                 {typing ? <span role="status" style={{ color: C.muted }}>{botName} is typing…</span> : en.a}
-                {!typing && <CoverageLine known={en.known} total={en.total} />}
+                {!typing && <CoverageLine known={en.known} total={en.total} corrections={en.corrections} />}
                 {isLast && !typing && (
                   <div style={S.voteRow}>
                     {requireVote && VERDICTS.map((v) => (
