@@ -57,11 +57,19 @@ export function resolveWord(model, word) {
   return best ? { word: best.word, how: "fuzzy" } : null;
 }
 
+// How much of the question the bot has actually read. A word it reached only by looking past a
+// typo still counts as known — but the correction is reported, so the machine stays honest about
+// having done a dumb lookup rather than understood anything.
 export function coverage(model, question) {
+  const knownWords = [], unknownWords = [], corrections = [];
   const words = contentWords(question);
-  const knownWords = words.filter((w) => model.uni[w]);
-  const unknownWords = words.filter((w) => !model.uni[w]);
-  return { known: knownWords.length, total: words.length, knownWords, unknownWords };
+  for (const typed of words) {
+    const read = resolveWord(model, typed);
+    if (!read) { unknownWords.push(typed); continue; }
+    knownWords.push(read.word);                     // the vocabulary word, so callers can highlight it in the text
+    if (read.word !== typed) corrections.push({ typed, read: read.word });
+  }
+  return { known: knownWords.length, total: words.length, knownWords, unknownWords, corrections };
 }
 
 // Weighted pick over a {token: count} object. `filter` optionally restricts candidates.

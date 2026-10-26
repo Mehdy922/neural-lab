@@ -2,7 +2,7 @@
 // in-text topic look out-of-text. The one thing that must not break: a word genuinely outside a
 // bot's text stays unrecognised, so the hallucination beat survives.
 import { describe, it, expect } from "vitest";
-import { trainModel, resolveWord } from "./ngram.js";
+import { trainModel, coverage, resolveWord } from "./ngram.js";
 import { wordForms, editDistance, STOPWORDS } from "./tokenize.js";
 import { STARTER_TEXTS, HISTORY_TEXT } from "./texts/index.js";
 
@@ -169,5 +169,40 @@ describe("words outside the text stay unrecognised (all six starter texts)", () 
 
   it("recognises none of the words of a plainly off-text question", () => {
     for (const w of ["biryani", "ronaldo", "minecraft"]) expect(resolveWord(history, w), w).toBeNull();
+  });
+});
+
+describe("coverage counts a corrected word as recognised", () => {
+  it("counts a typo as known and says what it read instead", () => {
+    const c = coverage(history, "Who built the Taj Mahel?");
+    expect(c.total).toBe(3);                               // built, taj, mahel
+    expect(c.known).toBe(3);
+    expect(c.corrections).toEqual([{ typed: "mahel", read: "mahal" }]);
+  });
+  it("reports every correction, in the order they were typed", () => {
+    const c = coverage(history, "Did the Mughals rule Dehli and Agra?");
+    expect(c.known).toBe(c.total);
+    expect(c.corrections).toEqual([{ typed: "mughals", read: "mughal" }, { typed: "dehli", read: "delhi" }]);
+  });
+  it("reports no corrections when every word was spelled right", () => {
+    const c = coverage(history, "Who built the Taj Mahal at Agra?");
+    expect(c.known).toBe(4);
+    expect(c.corrections).toEqual([]);
+  });
+  it("hands back the words the bot actually read, so they can be highlighted in its text", () => {
+    const c = coverage(history, "Who built the Taj Mahel?");
+    expect(c.knownWords).toEqual(["built", "taj", "mahal"]);
+    expect(c.unknownWords).toEqual([]);
+  });
+  it("still recognises nothing in a question made of foreign words", () => {
+    const c = coverage(history, "Is biryani better than pizza or a samosa?");
+    expect(c.known).toBe(0);
+    expect(c.total).toBe(4);
+    expect(c.corrections).toEqual([]);
+    expect(c.unknownWords).toEqual(["biryani", "better", "pizza", "samosa"]);
+  });
+  it("is quiet on an empty model", () => {
+    const empty = trainModel("");
+    expect(coverage(empty, "anything")).toEqual({ known: 0, total: 1, knownWords: [], unknownWords: ["anything"], corrections: [] });
   });
 });
